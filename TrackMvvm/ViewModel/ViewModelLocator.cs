@@ -39,6 +39,9 @@ namespace TrackMvvm.ViewModel
             }
 
             SimpleIoc.Default.Register<MainViewModel>();
+
+            //PersistenceService
+            //SessionService
         }
 
         /// <summary>
