@@ -9,7 +9,8 @@ namespace TrackMvvm.Design
         {
             var today = DateTime.Today;
             var workSession = new WorkSession(today);
-            workSession.Tasks.Add(new TaskTime() { Duration = 1, IsActive = false, Name = "SG" });
+            workSession.AddTask("SG");
+            workSession.Start("SG");
             callback(workSession, null);
         }
     }

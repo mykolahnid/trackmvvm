@@ -42,7 +42,9 @@ namespace TrackMvvm.Model
             {
                 if (Tasks.All(t => t.Name.ToLower() != name.ToLower()))
                 {
-                    Tasks.Add(new TaskTime() { Name = name });
+                    var taskTime = new TaskTime() { Name = name };
+                    taskTime.OnStart += Start;
+                    Tasks.Add(taskTime);
                     //if (TaskAdded != null)
                     //{
                     //    TaskAdded(Tasks[Tasks.Count - 1], null);

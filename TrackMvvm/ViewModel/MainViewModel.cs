@@ -47,10 +47,6 @@ namespace TrackMvvm.ViewModel
                     {
                         var taskTimeViewModel = new TaskTimeViewModel(t);
                         TasksCollection.Add(taskTimeViewModel);
-                        taskTimeViewModel.ButtonCommand = new RelayCommand
-                        (
-                            () => MessageBox.Show("Hello")
-                        );
                     }
                 });
         }

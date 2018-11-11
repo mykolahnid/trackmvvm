@@ -1,5 +1,4 @@
-﻿using System.Windows.Media;
-using GalaSoft.MvvmLight.Command;
+﻿using GalaSoft.MvvmLight.Command;
 using TrackMvvm.Model;
 
 namespace TrackMvvm.ViewModel
@@ -8,21 +7,11 @@ namespace TrackMvvm.ViewModel
     {
         public TaskTimeViewModel(TaskTime taskTime)
         {
-            Name = taskTime.Name;
-            Duration = taskTime.Duration;
-            Color = Colors.Black;
-            IsActive = taskTime.IsActive;
+            TaskTime = taskTime;
+            ButtonCommand = new RelayCommand(taskTime.Start);
         }
 
-        public string Name { get; set; }
-
-        public double Duration { get; set; }
-
-        public Color Color { get; set; }
-
-        public bool IsActive { get; set; }
-
-        public string DurationHours => (Duration / 60.0 / 60.0).ToString("0.0");
+        public TaskTime TaskTime { get; set; }
 
         public RelayCommand ButtonCommand { get; set; }
     }

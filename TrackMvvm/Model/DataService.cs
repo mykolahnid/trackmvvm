@@ -12,7 +12,9 @@ namespace TrackMvvm.Model
             //if  (sess != null) workSession = sess
             //else workSession = new WorkSession();
                 workSession = new WorkSession(today);
-            workSession.Tasks.Add(new TaskTime(){Duration =  1, IsActive = false, Name = "SG"});
+            workSession.AddTask("SG");
+            workSession.AddTask("APMS");
+            workSession.Start("SG");
             //}
 
             callback(workSession, null);
