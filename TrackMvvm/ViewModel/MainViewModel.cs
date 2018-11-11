@@ -1,4 +1,8 @@
-﻿using GalaSoft.MvvmLight;
+﻿using System.Collections.ObjectModel;
+using System.Linq;
+using System.Windows;
+using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Command;
 using TrackMvvm.Model;
 
 namespace TrackMvvm.ViewModel
@@ -13,27 +17,14 @@ namespace TrackMvvm.ViewModel
     {
         private readonly IDataService _dataService;
 
-        /// <summary>
-        /// The <see cref="WelcomeTitle" /> property's name.
-        /// </summary>
-        public const string WelcomeTitlePropertyName = "WelcomeTitle";
+        public ObservableCollection<TaskTimeViewModel> TasksCollection { get; set; } = new ObservableCollection<TaskTimeViewModel>();
 
-        private string _welcomeTitle = string.Empty;
+        private WorkSession _workSession;
 
-        /// <summary>
-        /// Gets the WelcomeTitle property.
-        /// Changes to that property's value raise the PropertyChanged event. 
-        /// </summary>
-        public string WelcomeTitle
+        public WorkSession WorkSession
         {
-            get
-            {
-                return _welcomeTitle;
-            }
-            set
-            {
-                Set(ref _welcomeTitle, value);
-            }
+            get => _workSession;
+            set => Set(ref _workSession, value);
         }
 
         /// <summary>
@@ -42,16 +33,25 @@ namespace TrackMvvm.ViewModel
         public MainViewModel(IDataService dataService)
         {
             _dataService = dataService;
-            _dataService.GetData(
+            
+            _dataService.GetWorkSession(
                 (item, error) =>
                 {
                     if (error != null)
                     {
-                        // Report error here
                         return;
                     }
 
-                    WelcomeTitle = item.Title;
+                    WorkSession = item;
+                    foreach (var t in WorkSession.Tasks)
+                    {
+                        var taskTimeViewModel = new TaskTimeViewModel(t);
+                        TasksCollection.Add(taskTimeViewModel);
+                        taskTimeViewModel.ButtonCommand = new RelayCommand
+                        (
+                            () => MessageBox.Show("Hello")
+                        );
+                    }
                 });
         }
 

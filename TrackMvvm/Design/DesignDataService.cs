@@ -5,17 +5,12 @@ namespace TrackMvvm.Design
 {
     public class DesignDataService : IDataService
     {
-        public void GetData(Action<DataItem, Exception> callback)
-        {
-            // Use this to create design time data
-
-            var item = new DataItem("Welcome to MVVM Light [design]");
-            callback(item, null);
-        }
-
         public void GetWorkSession(Action<WorkSession, Exception> callback)
         {
-            throw new NotImplementedException();
+            var today = DateTime.Today;
+            var workSession = new WorkSession(today);
+            workSession.Tasks.Add(new TaskTime() { Duration = 1, IsActive = false, Name = "SG" });
+            callback(workSession, null);
         }
     }
 }
