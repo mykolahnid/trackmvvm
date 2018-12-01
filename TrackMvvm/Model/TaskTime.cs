@@ -1,14 +1,37 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using TrackMvvm.Annotations;
 
 namespace TrackMvvm.Model
 {
-    public class TaskTime
+    public class TaskTime : INotifyPropertyChanged
     {
+        private bool _isActive;
+        private double _duration;
         public string Name { get; set; }
 
-        public double Duration { get; set; }
+        public double Duration
+        {
+            get => _duration;
+            set
+            {
+                if (value.Equals(_duration)) return;
+                _duration = value;
+                OnPropertyChanged();
+            }
+        }
 
-        public bool IsActive { get; set; }
+        public bool IsActive
+        {
+            get => _isActive;
+            set
+            {
+                if (value == _isActive) return;
+                _isActive = value;
+                OnPropertyChanged();
+            }
+        }
 
         public void Start()
         {
@@ -17,5 +40,12 @@ namespace TrackMvvm.Model
         }
 
         public event Action<string> OnStart;
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

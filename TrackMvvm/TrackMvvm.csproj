@@ -92,6 +92,7 @@
     <Compile Include="Model\IDataService.cs" />
     <Compile Include="Model\TaskTime.cs" />
     <Compile Include="Model\WorkSession.cs" />
+    <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Utilities\ActiveToBrushConverter.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\TaskTimeViewModel.cs" />
