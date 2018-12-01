@@ -94,6 +94,7 @@
     <Compile Include="Model\WorkSession.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Utilities\ActiveToBrushConverter.cs" />
+    <Compile Include="Utilities\SecondsToHoursConverter.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\TaskTimeViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />

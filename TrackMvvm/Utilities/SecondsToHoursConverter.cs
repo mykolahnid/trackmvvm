@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Globalization;
 using System.Windows.Data;
-using System.Windows.Media;
 
 namespace TrackMvvm.Utilities
 {
-    public class ActiveToBrushConverter : IValueConverter
+    public class SecondsToHoursConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value is bool b && b ? Brushes.Red : Brushes.Black;
+            return value is double seconds ? (seconds / 60.0 / 60.0).ToString("0.0") : "0";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value is Brush color && color.Equals(Brushes.Red);
+            return 0d;
         }
     }
 }

@@ -24,6 +24,8 @@ namespace TrackMvvm.Model
             Tasks = new List<TaskTime>();
             timer = new Timer(100);
             timer.Elapsed += timer_Elapsed;
+            timer.Start();
+            stopwatch.Start();
         }
 
         private void timer_Elapsed(object sender, ElapsedEventArgs e)
