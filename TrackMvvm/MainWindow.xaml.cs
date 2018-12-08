@@ -1,5 +1,9 @@
 ﻿using System.Windows;
+using GalaSoft.MvvmLight.Messaging;
+using Microsoft.Practices.ServiceLocation;
+using TrackMvvm.Constants;
 using TrackMvvm.ViewModel;
+using TrackMvvm.Views;
 
 namespace TrackMvvm
 {
@@ -14,7 +18,20 @@ namespace TrackMvvm
         public MainWindow()
         {
             InitializeComponent();
+
+            Messenger.Default.Register<NotificationMessageWithCallback>(this, MessengerActions.AddTaskDialog, AskForTaskName);
+
             Closing += (s, e) => ViewModelLocator.Cleanup();
+        }
+
+        private void AskForTaskName(NotificationMessageWithCallback obj)
+        {
+            AddTaskDialog dialog = new AddTaskDialog();
+            dialog.DataContext = new AddTaskViewModel();
+            if (dialog.ShowDialog() == true)
+            {
+                obj.Execute((dialog.DataContext as AddTaskViewModel).TaskName);
+            }
         }
     }
 }

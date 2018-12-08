@@ -1,8 +1,10 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
+using GalaSoft.MvvmLight.Messaging;
+using TrackMvvm.Constants;
 using TrackMvvm.Model;
 
 namespace TrackMvvm.ViewModel
@@ -27,6 +29,9 @@ namespace TrackMvvm.ViewModel
             set => Set(ref _workSession, value);
         }
 
+        public RelayCommand StopCommand { get; set; }
+        public RelayCommand AddTaskCommand { get; set; }
+
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
@@ -48,7 +53,21 @@ namespace TrackMvvm.ViewModel
                         var taskTimeViewModel = new TaskTimeViewModel(t);
                         TasksCollection.Add(taskTimeViewModel);
                     }
+
+                    StopCommand = new RelayCommand(WorkSession.Stop);
+                    AddTaskCommand = new RelayCommand(OnAddTask);
                 });
+        }
+
+        private void OnAddTask()
+        {
+            Messenger.Default.Send(
+                new NotificationMessageWithCallback(null, (Action<string>) this.TaskNameReceived), MessengerActions.AddTaskDialog);
+        }
+
+        private void TaskNameReceived(string name)
+        {
+            WorkSession.AddTask(name);
         }
 
         ////public override void Cleanup()
