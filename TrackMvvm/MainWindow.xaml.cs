@@ -1,6 +1,5 @@
 ﻿using System.Windows;
 using GalaSoft.MvvmLight.Messaging;
-using Microsoft.Practices.ServiceLocation;
 using TrackMvvm.Constants;
 using TrackMvvm.ViewModel;
 using TrackMvvm.Views;

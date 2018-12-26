@@ -14,6 +14,8 @@ namespace TrackMvvm.Model
         private TaskTime activeTask;
         private TimeSpan rememberedDuration;
 
+        public event EventHandler<TaskTime> TaskAdded;
+
         public List<TaskTime> Tasks { get; set; }
 
         public TimeSpan TotalDuration => stopwatch.Elapsed;
@@ -47,10 +49,7 @@ namespace TrackMvvm.Model
                     var taskTime = new TaskTime() { Name = name };
                     taskTime.OnStart += Start;
                     Tasks.Add(taskTime);
-                    //if (TaskAdded != null)
-                    //{
-                    //    TaskAdded(Tasks[Tasks.Count - 1], null);
-                    //}
+                    TaskAdded?.Invoke(null, Tasks[Tasks.Count - 1]);
                 }
             }
         }

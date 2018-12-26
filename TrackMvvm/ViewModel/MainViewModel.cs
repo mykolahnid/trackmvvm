@@ -48,6 +48,7 @@ namespace TrackMvvm.ViewModel
                     }
 
                     WorkSession = item;
+                    WorkSession.TaskAdded += this.WorkSession_TaskAdded;
                     foreach (var t in WorkSession.Tasks)
                     {
                         var taskTimeViewModel = new TaskTimeViewModel(t);
@@ -57,6 +58,11 @@ namespace TrackMvvm.ViewModel
                     StopCommand = new RelayCommand(WorkSession.Stop);
                     AddTaskCommand = new RelayCommand(OnAddTask);
                 });
+        }
+
+        private void WorkSession_TaskAdded(object sender, TaskTime addedTaskTime)
+        {
+            TasksCollection.Add(new TaskTimeViewModel(addedTaskTime));
         }
 
         private void OnAddTask()
