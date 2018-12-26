@@ -49,6 +49,7 @@ namespace TrackMvvm.ViewModel
 
                     WorkSession = item;
                     WorkSession.TaskAdded += this.WorkSession_TaskAdded;
+                    WorkSession.TaskStarted += this.WorkSession_TaskStarted;
                     foreach (var t in WorkSession.Tasks)
                     {
                         var taskTimeViewModel = new TaskTimeViewModel(t);
@@ -58,6 +59,11 @@ namespace TrackMvvm.ViewModel
                     StopCommand = new RelayCommand(WorkSession.Stop);
                     AddTaskCommand = new RelayCommand(OnAddTask);
                 });
+        }
+
+        private void WorkSession_TaskStarted(string taskName)
+        {
+            Messenger.Default.Send(new NotificationMessage<string>(taskName, null), MessengerActions.TaskStarted);
         }
 
         private void WorkSession_TaskAdded(object sender, TaskTime addedTaskTime)

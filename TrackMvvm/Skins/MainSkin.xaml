@@ -42,4 +42,22 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+    <DataTemplate x:Key="OverlayIcon">
+        <Grid Width="20" Height="20">
+            <Rectangle Fill="White"
+                       Stroke="White"
+                       StrokeThickness="0"/>
+            <TextBlock Text="{Binding}"
+                       TextAlignment="Center"
+                       Foreground="Black"
+                       FontWeight="Bold"
+                       Height="16"
+                       VerticalAlignment="Center"
+                       FontSize="10" TextOptions.TextFormattingMode="Display">
+                <!--<TextBlock.Effect>
+                    <DropShadowEffect ShadowDepth="0" />
+                </TextBlock.Effect>-->
+            </TextBlock>
+        </Grid>
+    </DataTemplate>
 </ResourceDictionary>

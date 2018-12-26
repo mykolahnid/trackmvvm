@@ -22,7 +22,9 @@
             <Utilities:ActiveToBrushConverter x:Key="ActiveToBrushConverter"/>
         </ResourceDictionary>
     </Window.Resources>
-
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo />
+    </Window.TaskbarItemInfo>
     <Window.DataContext>
         <Binding Path="Main" Source="{StaticResource Locator}"/>
     </Window.DataContext>

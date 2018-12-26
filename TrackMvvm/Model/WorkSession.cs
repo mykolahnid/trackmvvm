@@ -15,6 +15,7 @@ namespace TrackMvvm.Model
         private TimeSpan rememberedDuration;
 
         public event EventHandler<TaskTime> TaskAdded;
+        public event Action<string> TaskStarted;
 
         public List<TaskTime> Tasks { get; set; }
 
@@ -66,6 +67,7 @@ namespace TrackMvvm.Model
                 {
                     activeTask = task;
                     activeTask.IsActive = true;
+                    TaskStarted?.Invoke(name);
                     break;
                 }
             }
