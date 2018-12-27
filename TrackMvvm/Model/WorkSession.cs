@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Timers;
+using System.Xml.Serialization;
 
 namespace TrackMvvm.Model
 {
@@ -10,20 +13,21 @@ namespace TrackMvvm.Model
     {
         private readonly Stopwatch stopwatch = new Stopwatch();
         private readonly Timer timer;
-        public DateTime Today;
+        [DataMember] public DateTime Today = DateTime.Today;
         private TaskTime activeTask;
         private TimeSpan rememberedDuration;
 
         public event EventHandler<TaskTime> TaskAdded;
         public event Action<string> TaskStarted;
 
+        [DataMember]
         public List<TaskTime> Tasks { get; set; }
 
+        [DataMember]
         public TimeSpan TotalDuration => stopwatch.Elapsed;
 
-        public WorkSession(DateTime today)
+        public WorkSession()
         {
-            Today = today;
             Tasks = new List<TaskTime>();
             timer = new Timer(100);
             timer.Elapsed += timer_Elapsed;
@@ -53,6 +57,33 @@ namespace TrackMvvm.Model
                     TaskAdded?.Invoke(null, Tasks[Tasks.Count - 1]);
                 }
             }
+        }
+
+        public string Serialize()
+        {
+            var textWriter = new StringWriter();
+            var xmlSerializer = new XmlSerializer(typeof (WorkSession));
+            xmlSerializer.Serialize(textWriter, this);
+            return textWriter.ToString();
+        }
+
+        public static WorkSession Deserialize(string serialized)
+        {
+            var xmlSerializer = new XmlSerializer(typeof (WorkSession));
+
+            WorkSession deserialized = null;
+            using (TextReader reader = new StringReader(serialized))
+            {
+                try
+                {
+                    deserialized = xmlSerializer.Deserialize(reader) as WorkSession;                    
+                }
+                catch
+                {
+                }
+            }
+
+            return deserialized;
         }
 
         public void Start(string name)

@@ -7,11 +7,15 @@ namespace TrackMvvm.Design
     {
         public void GetWorkSession(Action<WorkSession, Exception> callback)
         {
-            var today = DateTime.Today;
-            var workSession = new WorkSession(today);
+            var workSession = new WorkSession();
             workSession.AddTask("SG");
             workSession.Start("SG");
             callback(workSession, null);
+        }
+
+        public void SaveWorkSession(WorkSession workSession)
+        {
+            
         }
     }
 }

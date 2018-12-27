@@ -6,13 +6,19 @@
         xmlns:ignore="http://www.galasoft.ch/ignore"
         xmlns:Utilities="clr-namespace:TrackMvvm.Utilities"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+        xmlns:command="http://www.galasoft.ch/mvvmlight"
         x:Class="TrackMvvm.MainWindow"
         mc:Ignorable="d ignore"
         Height="200.248"
         Width="454.331"
-        Title="MVVM Light Application"
+        Title="MVVM Light Application"    
         >
-
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Closing">
+            <command:EventToCommand Command="{Binding CloseCommand}" />
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

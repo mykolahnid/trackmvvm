@@ -1,6 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
+using System.Xml.Serialization;
 using TrackMvvm.Annotations;
 
 namespace TrackMvvm.Model
@@ -9,8 +11,11 @@ namespace TrackMvvm.Model
     {
         private bool _isActive;
         private double _duration;
+
+        [DataMember]
         public string Name { get; set; }
 
+        [DataMember]
         public double Duration
         {
             get => _duration;
@@ -22,6 +27,7 @@ namespace TrackMvvm.Model
             }
         }
 
+        [XmlIgnore]
         public bool IsActive
         {
             get => _isActive;
