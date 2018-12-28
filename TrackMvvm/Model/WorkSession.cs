@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text;
 using System.Timers;
 using System.Xml.Serialization;
 
@@ -111,6 +112,16 @@ namespace TrackMvvm.Model
                 activeTask.IsActive = false;
             }
             activeTask = null;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            foreach (var task in Tasks)
+            {
+                sb.Append(" " + task.Name + ": " + task.DurationHours + ";");
+            }
+            return sb.ToString();
         }
     }
 }

@@ -75,7 +75,7 @@
                         Margin="10,0,10,0"
                         HorizontalAlignment="Right"
                         
-                        Style="{StaticResource LinkButton}" Grid.RowSpan="2" VerticalAlignment="Bottom">
+                        Style="{StaticResource LinkButton}" Grid.RowSpan="2" VerticalAlignment="Bottom" Command="{Binding HistoryCommand}">
                     History
                 </Button>
             </Grid>

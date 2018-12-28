@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 
@@ -71,6 +72,21 @@ namespace TrackMvvm.Model
             }
             catch
             {
+            }
+        }
+
+        public IEnumerable<WorkSession> GetWorkSessionHistory()
+        {
+            string trackDirectory = GetTrackDirectory();
+
+            string[] sessions = Directory.GetFiles(trackDirectory);
+            foreach (string s in sessions)
+            {
+                var deserialized = WorkSession.Deserialize(File.ReadAllText(s));
+                if (deserialized != null)
+                {
+                    yield return deserialized;
+                }
             }
         }
 

@@ -23,8 +23,19 @@ namespace TrackMvvm
 
             Messenger.Default.Register<NotificationMessageWithCallback>(this, MessengerActions.AddTaskDialog, AskForTaskName);
             Messenger.Default.Register<NotificationMessage<string>>(this, MessengerActions.TaskStarted, OnTaskStarted);
+            Messenger.Default.Register<NotificationMessageWithCallback>(this, MessengerActions.ShowHistory, OnShowHistory);
 
             Closing += (s, e) => ViewModelLocator.Cleanup();
+        }
+
+        private void OnShowHistory(NotificationMessageWithCallback message)
+        {
+            var text = message.Notification;
+            var messageBoxResult = MessageBox.Show(text, "History", MessageBoxButton.YesNo);
+            if (messageBoxResult == MessageBoxResult.Yes)
+            {
+                message.Execute(true);
+            }
         }
 
         private void OnTaskStarted(NotificationMessage<string> message)
@@ -58,13 +69,13 @@ namespace TrackMvvm
         }
 
 
-        private void AskForTaskName(NotificationMessageWithCallback obj)
+        private void AskForTaskName(NotificationMessageWithCallback message)
         {
             AddTaskDialog dialog = new AddTaskDialog();
             dialog.DataContext = new AddTaskViewModel();
             if (dialog.ShowDialog() == true)
             {
-                obj.Execute((dialog.DataContext as AddTaskViewModel).TaskName);
+                message.Execute((dialog.DataContext as AddTaskViewModel).TaskName);
             }
         }
     }

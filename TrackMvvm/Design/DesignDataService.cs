@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using TrackMvvm.Model;
 
 namespace TrackMvvm.Design
@@ -16,6 +17,11 @@ namespace TrackMvvm.Design
         public void SaveWorkSession(WorkSession workSession)
         {
             
+        }
+
+        public IEnumerable<WorkSession> GetWorkSessionHistory()
+        {
+            return null;
         }
     }
 }

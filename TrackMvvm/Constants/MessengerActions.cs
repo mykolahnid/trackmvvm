@@ -4,5 +4,6 @@
     {
         public const string AddTaskDialog = "AddTaskDialog";
         public const string TaskStarted = "TaskStarted";
+        public const string ShowHistory = "ShowHistory";
     }
 }
