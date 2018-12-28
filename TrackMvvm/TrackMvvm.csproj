@@ -96,6 +96,7 @@
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Utilities\ActiveToBrushConverter.cs" />
     <Compile Include="Utilities\SecondsToHoursConverter.cs" />
+    <Compile Include="Utilities\TotalTimeMultiConverter.cs" />
     <Compile Include="ViewModel\AddTaskViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\TaskTimeViewModel.cs" />

@@ -12,8 +12,7 @@
         mc:Ignorable="d ignore"
         Height="200.248"
         Width="454.331"
-        Title="MVVM Light Application"    
-        >
+        >    
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing">
             <command:EventToCommand Command="{Binding CloseCommand}" />
@@ -26,8 +25,15 @@
             </ResourceDictionary.MergedDictionaries>
             <Utilities:SecondsToHoursConverter x:Key="SecondsToHoursConverter"/>
             <Utilities:ActiveToBrushConverter x:Key="ActiveToBrushConverter"/>
+            <Utilities:TotalTimeMultiConverter x:Key="TotalTimeMultiConverter"/>
         </ResourceDictionary>
     </Window.Resources>
+    <Window.Title>
+        <MultiBinding Converter="{StaticResource TotalTimeMultiConverter}">
+            <Binding Path="WorkSession.TotalTasksDuration"></Binding>
+            <Binding Path="WorkSession.TotalDuration"></Binding>
+        </MultiBinding>
+    </Window.Title>
     <Window.TaskbarItemInfo>
         <TaskbarItemInfo />
     </Window.TaskbarItemInfo>

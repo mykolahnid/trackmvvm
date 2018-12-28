@@ -1,22 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Timers;
 using System.Xml.Serialization;
+using TrackMvvm.Annotations;
 
 namespace TrackMvvm.Model
 {
-    public class WorkSession
+    public class WorkSession : INotifyPropertyChanged
     {
         private readonly Stopwatch stopwatch = new Stopwatch();
         private readonly Timer timer;
         [DataMember] public DateTime Today = DateTime.Today;
         private TaskTime activeTask;
         private TimeSpan rememberedDuration;
+        private double totalTasksDuration;
 
         public event EventHandler<TaskTime> TaskAdded;
         public event Action<string> TaskStarted;
@@ -26,6 +30,17 @@ namespace TrackMvvm.Model
 
         [DataMember]
         public TimeSpan TotalDuration => stopwatch.Elapsed;
+
+        public double TotalTasksDuration
+        {
+            get => totalTasksDuration;
+            set
+            {
+                if (value.Equals(totalTasksDuration)) return;
+                totalTasksDuration = value;
+                OnPropertyChanged();
+            }
+        }
 
         public WorkSession()
         {
@@ -40,7 +55,9 @@ namespace TrackMvvm.Model
         {
             if (activeTask != null)
             {
-                activeTask.Duration = activeTask.Duration += (stopwatch.Elapsed - rememberedDuration).TotalSeconds;
+                var activeTaskDuration = (stopwatch.Elapsed - rememberedDuration).TotalSeconds;
+                activeTask.Duration += activeTaskDuration;
+                TotalTasksDuration += activeTaskDuration;
             }
             rememberedDuration = stopwatch.Elapsed;
         }
@@ -122,6 +139,14 @@ namespace TrackMvvm.Model
                 sb.Append(" " + task.Name + ": " + task.DurationHours + ";");
             }
             return sb.ToString();
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
