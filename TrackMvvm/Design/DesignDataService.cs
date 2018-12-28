@@ -23,5 +23,10 @@ namespace TrackMvvm.Design
         {
             return null;
         }
+
+        public void DeleteHistory()
+        {
+            
+        }
     }
 }

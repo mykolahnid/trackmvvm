@@ -114,7 +114,10 @@ namespace TrackMvvm.ViewModel
 
         private void OnHistoryDeleting(bool deleteHistory)
         {
-            
+            if (deleteHistory)
+            {
+                _dataService.DeleteHistory();
+            }
         }
 
         private void TaskNameReceived(string name)

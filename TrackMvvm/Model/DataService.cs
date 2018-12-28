@@ -77,16 +77,27 @@ namespace TrackMvvm.Model
 
         public IEnumerable<WorkSession> GetWorkSessionHistory()
         {
-            string trackDirectory = GetTrackDirectory();
+            var trackDirectory = GetTrackDirectory();
 
-            string[] sessions = Directory.GetFiles(trackDirectory);
-            foreach (string s in sessions)
+            var sessionFiles = Directory.GetFiles(trackDirectory);
+            foreach (var s in sessionFiles)
             {
                 var deserialized = WorkSession.Deserialize(File.ReadAllText(s));
                 if (deserialized != null)
                 {
                     yield return deserialized;
                 }
+            }
+        }
+
+        public void DeleteHistory()
+        {
+            string trackDirectory = GetTrackDirectory();
+
+            string[] sessionFiles = Directory.GetFiles(trackDirectory);
+            foreach (var sessionFile in sessionFiles)
+            {
+                File.Delete(sessionFile);
             }
         }
 
