@@ -69,7 +69,7 @@ namespace TrackMvvm.Model
             {
                 if (Tasks.All(t => t.Name.ToLower() != name.ToLower()))
                 {
-                    var taskTime = new TaskTime() { Name = name };
+                    var taskTime = new TaskTime { Name = name };
                     taskTime.OnStart += Start;
                     Tasks.Add(taskTime);
                     TaskAdded?.Invoke(null, Tasks[Tasks.Count - 1]);
@@ -95,6 +95,7 @@ namespace TrackMvvm.Model
                 try
                 {
                     deserialized = xmlSerializer.Deserialize(reader) as WorkSession;                    
+                    deserialized.InitEvents();
                 }
                 catch
                 {
@@ -102,6 +103,14 @@ namespace TrackMvvm.Model
             }
 
             return deserialized;
+        }
+
+        private void InitEvents()
+        {
+            foreach (var taskTime in Tasks)
+            {
+                taskTime.OnStart += Start;
+            }
         }
 
         public void Start(string name)
