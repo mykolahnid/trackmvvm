@@ -28,11 +28,14 @@ namespace TrackMvvm
             Closing += (s, e) => ViewModelLocator.Cleanup();
         }
 
-        private void OnShowHistory(NotificationMessageWithCallback message)
+        private static void OnShowHistory(NotificationMessageWithCallback message)
         {
-            var text = message.Notification;
-            var messageBoxResult = MessageBox.Show(text, "History", MessageBoxButton.YesNo);
-            if (messageBoxResult == MessageBoxResult.Yes)
+            //hack, target should not be used this way
+            var dialog = new HistoryDialog {DataContext = message.Target};
+
+            var messageBoxResult = dialog.ShowDialog();
+
+            if (messageBoxResult == true)
             {
                 message.Execute(true);
             }
@@ -68,11 +71,9 @@ namespace TrackMvvm
             TaskbarItemInfo.Overlay = bmp;
         }
 
-
-        private void AskForTaskName(NotificationMessageWithCallback message)
+        private static void AskForTaskName(NotificationMessageWithCallback message)
         {
-            AddTaskDialog dialog = new AddTaskDialog();
-            dialog.DataContext = new AddTaskViewModel();
+            var dialog = new AddTaskDialog {DataContext = new AddTaskViewModel()};
             if (dialog.ShowDialog() == true)
             {
                 message.Execute((dialog.DataContext as AddTaskViewModel).TaskName);

@@ -103,13 +103,10 @@ namespace TrackMvvm.ViewModel
         private void ShowHistory()
         {
             var workSessionHistory = _dataService.GetWorkSessionHistory();
-            var historyBuilder = new StringBuilder();
-            foreach (var workSession in workSessionHistory)
-            {
-                historyBuilder.AppendLine(workSession.Today.ToString("ddd dd MMM") + " " + workSession);
-            }
+            WorkSessionHistoryViewModel historyViewModel = new WorkSessionHistoryViewModel();
+            historyViewModel.SetWorkSessionHistory(workSessionHistory);
 
-            Messenger.Default.Send(new NotificationMessageWithCallback(null, historyBuilder.ToString(), (Action<bool>)this.OnHistoryDeleting), MessengerActions.ShowHistory);
+            Messenger.Default.Send(new NotificationMessageWithCallback(null, historyViewModel, null, (Action<bool>)this.OnHistoryDeleting), MessengerActions.ShowHistory);
         }
 
         private void OnHistoryDeleting(bool deleteHistory)
