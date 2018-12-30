@@ -28,10 +28,7 @@ namespace TrackMvvm.Model
         }
 
         [XmlIgnore]
-        public string DurationHours
-        {
-            get { return (Duration/60.0/60.0).ToString("0.0"); }
-        }
+        public double DurationHours => Math.Round(Duration / 60.0 / 60.0, 1);
 
         [XmlIgnore]
         public bool IsActive

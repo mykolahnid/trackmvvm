@@ -31,6 +31,7 @@ namespace TrackMvvm.Model
         [DataMember]
         public TimeSpan TotalDuration => stopwatch.Elapsed;
 
+        [XmlIgnore]
         public double TotalTasksDuration
         {
             get => totalTasksDuration;
