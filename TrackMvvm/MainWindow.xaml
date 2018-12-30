@@ -8,9 +8,11 @@
         xmlns:system="clr-namespace:System;assembly=mscorlib"
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         xmlns:command="http://www.galasoft.ch/mvvmlight"
+    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+    xmlns:xcdg="http://schemas.xceed.com/wpf/xaml/datagrid"
         x:Class="TrackMvvm.MainWindow"
         mc:Ignorable="d ignore"
-        Height="200.248"
+        Height="600.248"
         Width="454.331"
         >    
     <i:Interaction.Triggers>
@@ -53,6 +55,7 @@
                         <RowDefinition Height="40*" />
                         <RowDefinition Height="20*" />
                         <RowDefinition Height="40*" />
+                        <RowDefinition Height="400"></RowDefinition>
                 </Grid.RowDefinitions>
                 <ItemsControl ItemsSource="{Binding TasksCollection}" Grid.RowSpan="4" Grid.Row="0">
                     <ItemsControl.ItemsPanel>
@@ -84,6 +87,7 @@
                         Style="{StaticResource LinkButton}" Grid.RowSpan="2" VerticalAlignment="Bottom" Command="{Binding HistoryCommand}">
                     History
                 </Button>
+                <Button Grid.Row="4" Click="Button_Click"> show history</Button>
             </Grid>
         </ScrollViewer>
     </Grid>

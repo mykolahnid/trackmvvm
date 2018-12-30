@@ -78,5 +78,11 @@ namespace TrackMvvm
                 message.Execute((dialog.DataContext as AddTaskViewModel).TaskName);
             }
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            HistoryDialog dlg = new HistoryDialog();
+            dlg.Show();
+        }
     }
 }

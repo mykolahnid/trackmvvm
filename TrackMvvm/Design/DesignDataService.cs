@@ -21,7 +21,9 @@ namespace TrackMvvm.Design
 
         public IEnumerable<WorkSession> GetWorkSessionHistory()
         {
-            return null;
+            var workSession = new WorkSession();
+            workSession.AddTask("SG");
+            yield return workSession;
         }
 
         public void DeleteHistory()

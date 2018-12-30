@@ -13,6 +13,7 @@ using CommonServiceLocator;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
 using TrackMvvm.Model;
+using TrackMvvm.Views;
 
 namespace TrackMvvm.ViewModel
 {
@@ -39,7 +40,7 @@ namespace TrackMvvm.ViewModel
             }
 
             SimpleIoc.Default.Register<MainViewModel>();
-
+            SimpleIoc.Default.Register<WorkSessionHistoryViewModel>();
             //PersistenceService
             //SessionService
         }
@@ -56,6 +57,11 @@ namespace TrackMvvm.ViewModel
             {
                 return ServiceLocator.Current.GetInstance<MainViewModel>();
             }
+        }
+
+        public WorkSessionHistoryViewModel HistoryViewModel
+        {
+            get { return ServiceLocator.Current.GetInstance<WorkSessionHistoryViewModel>(); }
         }
 
         /// <summary>

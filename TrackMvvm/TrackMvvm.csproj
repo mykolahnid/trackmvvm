@@ -95,14 +95,19 @@
     <Compile Include="Model\WorkSession.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Utilities\ActiveToBrushConverter.cs" />
+    <Compile Include="Utilities\BindableDynamicDictionary .cs" />
     <Compile Include="Utilities\SecondsToHoursConverter.cs" />
     <Compile Include="Utilities\TotalTimeMultiConverter.cs" />
     <Compile Include="ViewModel\AddTaskViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\TaskTimeViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
+    <Compile Include="ViewModel\WorkSessionHistoryViewModel.cs" />
     <Compile Include="Views\AddTaskDialog.xaml.cs">
       <DependentUpon>AddTaskDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\HistoryDialog.xaml.cs">
+      <DependentUpon>HistoryDialog.xaml</DependentUpon>
     </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -121,6 +126,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\AddTaskDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\HistoryDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
