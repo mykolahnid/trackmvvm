@@ -8,11 +8,14 @@ namespace TrackMvvm.ViewModel
         public TaskTimeViewModel(TaskTime taskTime)
         {
             TaskTime = taskTime;
-            ButtonCommand = new RelayCommand(taskTime.Start);
+            StartCommand = new RelayCommand(taskTime.Start);
+            RemoveCommand = new RelayCommand(taskTime.Remove);
         }
 
         public TaskTime TaskTime { get; set; }
 
-        public RelayCommand ButtonCommand { get; set; }
+        public RelayCommand StartCommand { get; set; }
+
+        public RelayCommand RemoveCommand { get; set; }
     }
 }

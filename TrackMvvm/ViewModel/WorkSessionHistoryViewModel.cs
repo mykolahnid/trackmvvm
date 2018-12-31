@@ -24,7 +24,7 @@ namespace TrackMvvm.ViewModel
 
                 foreach (var taskName in taskNames)
                 {
-                    historyItem[taskName] = 0;
+                    historyItem[taskName] = 0.ToString(HoursFormat);
                 }
 
                 var total = 0d;

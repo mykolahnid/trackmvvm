@@ -56,6 +56,7 @@ namespace TrackMvvm.ViewModel
                     WorkSession = item;
                     WorkSession.TaskAdded += this.WorkSession_TaskAdded;
                     WorkSession.TaskStarted += this.WorkSession_TaskStarted;
+                    WorkSession.TaskRemoved += this.WorkSession_TaskRemoved;
                     foreach (var t in WorkSession.Tasks)
                     {
                         var taskTimeViewModel = new TaskTimeViewModel(t);
@@ -72,6 +73,18 @@ namespace TrackMvvm.ViewModel
                 });
 
             HistoryCommand  = new RelayCommand(ShowHistory);
+        }
+
+        private void WorkSession_TaskRemoved(string taskName)
+        {
+            for (int i = 0; i < TasksCollection.Count; i++)
+            {
+                if (TasksCollection[i].TaskTime.Name == taskName)
+                {
+                    TasksCollection.RemoveAt(i);
+                    break;
+                }
+            }
         }
 
         private void saveSessionTimer_Tick(object sender, EventArgs e)
@@ -102,6 +115,7 @@ namespace TrackMvvm.ViewModel
 
         private void ShowHistory()
         {
+            _dataService.SaveWorkSession(WorkSession);
             var workSessionHistory = _dataService.GetWorkSessionHistory();
             WorkSessionHistoryViewModel historyViewModel = new WorkSessionHistoryViewModel();
             historyViewModel.SetWorkSessionHistory(workSessionHistory);

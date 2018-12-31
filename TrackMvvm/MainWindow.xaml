@@ -69,7 +69,13 @@
                                     <RowDefinition Height="40*" />
                                 </Grid.RowDefinitions>
                                 <Label Content="{Binding TaskTime.Duration, Converter={StaticResource SecondsToHoursConverter}}" Foreground="{Binding TaskTime.IsActive, Converter={StaticResource ActiveToBrushConverter}}" Margin="0,0,5,5" Grid.Row="0"></Label>
-                                <Button Content="{Binding TaskTime.Name}" Command="{Binding ButtonCommand}" Grid.Row="1"/>
+                                <Button Content="{Binding TaskTime.Name}" Command="{Binding StartCommand}" Grid.Row="1">
+                                    <Button.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Remove" Command="{Binding RemoveCommand}" ></MenuItem>
+                                        </ContextMenu>
+                                    </Button.ContextMenu>
+                                    </Button>
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

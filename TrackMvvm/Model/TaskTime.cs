@@ -48,7 +48,14 @@ namespace TrackMvvm.Model
             OnStart?.Invoke(this.Name);
         }
 
+        public void Remove()
+        {
+            OnRemove?.Invoke(this.Name);
+        }
+
         public event Action<string> OnStart;
+        public event Action<string> OnRemove;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         [NotifyPropertyChangedInvocator]

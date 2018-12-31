@@ -24,6 +24,7 @@ namespace TrackMvvm.Model
 
         public event EventHandler<TaskTime> TaskAdded;
         public event Action<string> TaskStarted;
+        public event Action<string> TaskRemoved;
 
         [DataMember]
         public List<TaskTime> Tasks { get; set; }
@@ -71,7 +72,7 @@ namespace TrackMvvm.Model
                 if (Tasks.All(t => t.Name.ToLower() != name.ToLower()))
                 {
                     var taskTime = new TaskTime { Name = name };
-                    taskTime.OnStart += Start;
+                    InitEvents(taskTime);                    
                     Tasks.Add(taskTime);
                     TaskAdded?.Invoke(null, Tasks[Tasks.Count - 1]);
                 }
@@ -110,8 +111,14 @@ namespace TrackMvvm.Model
         {
             foreach (var taskTime in Tasks)
             {
-                taskTime.OnStart += Start;
+                InitEvents(taskTime);
             }
+        }
+
+        private void InitEvents(TaskTime taskTime)
+        {
+            taskTime.OnStart += Start;
+            taskTime.OnRemove += Remove;
         }
 
         public void Start(string name)
@@ -127,6 +134,24 @@ namespace TrackMvvm.Model
                     activeTask = task;
                     activeTask.IsActive = true;
                     TaskStarted?.Invoke(name);
+                    break;
+                }
+            }
+        }
+
+        public void Remove(string name)
+        {
+            if (activeTask?.Name == name)
+            {
+                Stop();
+            }
+
+            for (var i = 0; i < Tasks.Count; i++)
+            {
+                if (Tasks[i].Name == name)
+                {
+                    Tasks.RemoveAt(i);
+                    TaskRemoved?.Invoke(name);
                     break;
                 }
             }
