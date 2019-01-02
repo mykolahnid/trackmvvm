@@ -47,6 +47,13 @@ namespace TrackMvvm.Model
                         }
                         deserialized.Today = DateTime.Today;
                     }
+                    else
+                    {
+                        foreach (var task in deserialized.Tasks)
+                        {
+                            deserialized.TotalTasksDuration += task.Duration;
+                        }
+                    }
                 }
                 session = deserialized;
             }
