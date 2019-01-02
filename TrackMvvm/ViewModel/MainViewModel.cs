@@ -63,7 +63,7 @@ namespace TrackMvvm.ViewModel
                         TasksCollection.Add(taskTimeViewModel);
                     }
 
-                    StopCommand = new RelayCommand(WorkSession.Stop);
+                    StopCommand = new RelayCommand(OnStop);
                     AddTaskCommand = new RelayCommand(OnAddTask);
                     CloseCommand = new RelayCommand(OnClosing);                    
 
@@ -111,6 +111,12 @@ namespace TrackMvvm.ViewModel
         {
             Messenger.Default.Send(
                 new NotificationMessageWithCallback(null, (Action<string>) this.TaskNameReceived), MessengerActions.AddTaskDialog);
+        }
+
+        private void OnStop()
+        {
+            Messenger.Default.Send(new NotificationMessage<string>("", null), MessengerActions.TaskStarted);
+            WorkSession.Stop();
         }
 
         private void ShowHistory()
