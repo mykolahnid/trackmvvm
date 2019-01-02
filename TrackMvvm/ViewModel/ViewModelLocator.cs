@@ -12,6 +12,7 @@
 using CommonServiceLocator;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
+using TrackMvvm.Helpers;
 using TrackMvvm.Model;
 using TrackMvvm.Views;
 
@@ -40,6 +41,7 @@ namespace TrackMvvm.ViewModel
             }
 
             SimpleIoc.Default.Register<MainViewModel>();
+            SimpleIoc.Default.Register<Bootstrapper>();
             //PersistenceService
             //SessionService
         }

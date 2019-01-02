@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.28010.2048
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackMvvm", "TrackMvvm\TrackMvvm.csproj", "{886241E3-42E3-421C-AE2C-79C8B9D14265}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackMvvm.Contracts", "TrackMvvm.Contracts\TrackMvvm.Contracts.csproj", "{03302C38-5D4D-466E-8E2E-D6F55E3C3B30}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackMvvm.ApmsIntegration", "TrackMvvm.ApmsIntegration\TrackMvvm.ApmsIntegration.csproj", "{65AB9878-4A6D-443E-9AFB-B30672D8D552}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{886241E3-42E3-421C-AE2C-79C8B9D14265}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{886241E3-42E3-421C-AE2C-79C8B9D14265}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{886241E3-42E3-421C-AE2C-79C8B9D14265}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03302C38-5D4D-466E-8E2E-D6F55E3C3B30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03302C38-5D4D-466E-8E2E-D6F55E3C3B30}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03302C38-5D4D-466E-8E2E-D6F55E3C3B30}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03302C38-5D4D-466E-8E2E-D6F55E3C3B30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65AB9878-4A6D-443E-9AFB-B30672D8D552}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65AB9878-4A6D-443E-9AFB-B30672D8D552}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65AB9878-4A6D-443E-9AFB-B30672D8D552}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65AB9878-4A6D-443E-9AFB-B30672D8D552}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -88,6 +88,7 @@
     </ApplicationDefinition>
     <Compile Include="Constants\MessengerActions.cs" />
     <Compile Include="Design\DesignDataService.cs" />
+    <Compile Include="Helpers\Bootstrapper.cs" />
     <Compile Include="Model\DataItem.cs" />
     <Compile Include="Model\DataService.cs" />
     <Compile Include="Model\IDataService.cs" />
@@ -168,6 +169,12 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TrackMvvm.Contracts\TrackMvvm.Contracts.csproj">
+      <Project>{03302c38-5d4d-466e-8e2e-d6f55e3c3b30}</Project>
+      <Name>TrackMvvm.Contracts</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
