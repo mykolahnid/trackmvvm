@@ -8,7 +8,11 @@ namespace TrackMvvm.Utilities
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
+#if DEBUG
+            return value;
+#else
             return value is double seconds ? (seconds / 60.0 / 60.0).ToString("0.0") : "0";
+#endif
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

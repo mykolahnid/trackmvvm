@@ -7,7 +7,12 @@ namespace TrackMvvm.Model
 {
     public class DataService : IDataService
     {
+
+#if DEBUG
+        private const string PREFIX = "trackmvvmTEST ";
+#else
         private const string PREFIX = "trackmvvm ";
+#endif
         private const string DATE_FORMAT = "yyyy-MM-dd";
 
         private static DateTime GetTrackDate(string s)
@@ -19,7 +24,7 @@ namespace TrackMvvm.Model
 
         public void GetWorkSession(Action<WorkSession, Exception> callback)
         {
-            string trackDirectory = GetTrackDirectory();            
+            string trackDirectory = GetTrackDirectory();
             string[] sessionFiles = Directory.GetFiles(trackDirectory);
             var mostRecentTrackDate = new DateTime(1970, 1, 1);
             string mostRecentTrackFile = "";
@@ -111,11 +116,17 @@ namespace TrackMvvm.Model
         private static string GetTrackDirectory()
         {
             string applicationDataDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+#if DEBUG
+            string trackDirectory = Path.Combine(applicationDataDirectory, "TrackMvvmTest");
+#else
             string trackDirectory = Path.Combine(applicationDataDirectory, "TrackMvvm");
+#endif
+
             if (!Directory.Exists(trackDirectory))
             {
                 Directory.CreateDirectory(trackDirectory);
             }
+
             return trackDirectory;
         }
     }
