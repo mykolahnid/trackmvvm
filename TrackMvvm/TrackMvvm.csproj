@@ -91,6 +91,7 @@
     <Compile Include="Helpers\Bootstrapper.cs" />
     <Compile Include="Model\DataItem.cs" />
     <Compile Include="Model\DataService.cs" />
+    <Compile Include="Model\ExtraTaskProperties.cs" />
     <Compile Include="Model\IDataService.cs" />
     <Compile Include="Model\TaskTime.cs" />
     <Compile Include="Model\WorkSession.cs" />
