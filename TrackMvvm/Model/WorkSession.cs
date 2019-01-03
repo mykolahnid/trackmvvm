@@ -55,6 +55,7 @@ namespace TrackMvvm.Model
 
         private void timer_Elapsed(object sender, ElapsedEventArgs e)
         {
+            OnPropertyChanged(nameof(TotalDuration));
             if (activeTask != null)
             {
                 var activeTaskDuration = (stopwatch.Elapsed - rememberedDuration).TotalSeconds;
