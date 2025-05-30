@@ -1,4 +1,4 @@
-﻿using GalaSoft.MvvmLight.Command;
+﻿using CommunityToolkit.Mvvm.Input;
 using TrackMvvm.Model;
 
 namespace TrackMvvm.ViewModel

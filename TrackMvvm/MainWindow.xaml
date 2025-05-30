@@ -6,7 +6,7 @@
         xmlns:ignore="http://www.galasoft.ch/ignore"
         xmlns:Utilities="clr-namespace:TrackMvvm.Utilities"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
-        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:command="http://www.galasoft.ch/mvvmlight"
         x:Class="TrackMvvm.MainWindow"
         mc:Ignorable="d ignore"
@@ -15,7 +15,7 @@
         >    
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing">
-            <command:EventToCommand Command="{Binding CloseCommand}" />
+            <i:InvokeCommandAction Command="{Binding CloseCommand}" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Window.Resources>

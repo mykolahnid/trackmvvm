@@ -1,60 +1,73 @@
 ﻿/*
   In App.xaml:
   <Application.Resources>
-      <vm:ViewModelLocatorTemplate xmlns:vm="clr-namespace:TrackMvvm.ViewModel"
-                                   x:Key="Locator" />
+      <vm:ViewModelLocator xmlns:vm="clr-namespace:TrackMvvm.ViewModel"
+                           x:Key="Locator" />
   </Application.Resources>
   
   In the View:
-  DataContext="{Binding Source={StaticResource Locator}, Path=ViewModelName}"
+  DataContext="{Binding Source={StaticResource Locator}, Path=Main}"
 */
 
-using CommonServiceLocator;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Ioc;
+using System;
+using System.ComponentModel;
+using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 using TrackMvvm.Model;
-using TrackMvvm.Views;
 
 namespace TrackMvvm.ViewModel
 {
     /// <summary>
     /// This class contains static references to all the view models in the
     /// application and provides an entry point for the bindings.
-    /// <para>
-    /// See http://www.mvvmlight.net
-    /// </para>
     /// </summary>
     public class ViewModelLocator
     {
+        private static IServiceProvider _serviceProvider;
+
         static ViewModelLocator()
         {
-            ServiceLocator.SetLocatorProvider(() => SimpleIoc.Default);
+            ConfigureServices();
+        }
 
-            if (ViewModelBase.IsInDesignModeStatic)
+        private static void ConfigureServices()
+        {
+            var services = new ServiceCollection();
+
+            // Register data services
+            if (IsInDesignMode)
             {
-                SimpleIoc.Default.Register<IDataService, Design.DesignDataService>();
+                services.AddSingleton<IDataService, Design.DesignDataService>();
             }
             else
             {
-                SimpleIoc.Default.Register<IDataService, DataService>();
+                services.AddSingleton<IDataService, DataService>();
             }
 
-            SimpleIoc.Default.Register<MainViewModel>();
-            //PersistenceService
-            //SessionService
+            // Register ViewModels
+            services.AddTransient<MainViewModel>();
+
+            // Add other ViewModels as needed:
+            // services.AddTransient<AddTaskViewModel>();
+            // services.AddTransient<HistoryViewModel>();
+
+            _serviceProvider = services.BuildServiceProvider();
         }
 
         /// <summary>
         /// Gets the Main property.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance",
-            "CA1822:MarkMembersAsStatic",
-            Justification = "This non-static member is needed for data binding purposes.")]
-        public MainViewModel Main
+        public MainViewModel Main => _serviceProvider.GetRequiredService<MainViewModel>();
+
+        /// <summary>
+        /// Gets a value indicating whether the application is in design mode.
+        /// </summary>
+        public static bool IsInDesignMode
         {
             get
             {
-                return ServiceLocator.Current.GetInstance<MainViewModel>();
+                return DesignerProperties.GetIsInDesignMode(new DependencyObject()) ||
+                       LicenseManager.UsageMode == LicenseUsageMode.Designtime;
             }
         }
 
@@ -63,6 +76,10 @@ namespace TrackMvvm.ViewModel
         /// </summary>
         public static void Cleanup()
         {
+            if (_serviceProvider is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
     }
 }

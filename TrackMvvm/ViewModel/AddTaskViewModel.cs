@@ -1,9 +1,10 @@
-﻿using GalaSoft.MvvmLight;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TrackMvvm.ViewModel
 {
-    public class AddTaskViewModel : ViewModelBase
+    public partial class AddTaskViewModel : ObservableObject
     {
-        public string TaskName { get; set; } = "";
+        [ObservableProperty]
+        private string taskName = "";
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System.Windows;
-using GalaSoft.MvvmLight.Threading;
 
 namespace TrackMvvm
 {
@@ -10,7 +9,6 @@ namespace TrackMvvm
     {
         static App()
         {
-            DispatcherHelper.Initialize();
         }
     }
 }

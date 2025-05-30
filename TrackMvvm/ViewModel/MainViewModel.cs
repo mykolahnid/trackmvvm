@@ -1,35 +1,24 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using System;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using System.Windows.Threading;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
-using GalaSoft.MvvmLight.Messaging;
-using TrackMvvm.Constants;
 using TrackMvvm.Model;
 
 namespace TrackMvvm.ViewModel
 {
     /// <summary>
     /// This class contains properties that the main View can data bind to.
-    /// <para>
-    /// See http://www.mvvmlight.net
-    /// </para>
     /// </summary>
-    public class MainViewModel : ViewModelBase
+    public partial class MainViewModel : ObservableObject
     {
         private readonly IDataService _dataService;
 
         public ObservableCollection<TaskTimeViewModel> TasksCollection { get; set; } = new ObservableCollection<TaskTimeViewModel>();
 
+        [ObservableProperty]
         private WorkSession _workSession;
-
-        public WorkSession WorkSession
-        {
-            get => _workSession;
-            set => Set(ref _workSession, value);
-        }
 
         public RelayCommand StopCommand { get; set; }
         public RelayCommand AddTaskCommand { get; set; }
@@ -44,7 +33,7 @@ namespace TrackMvvm.ViewModel
         public MainViewModel(IDataService dataService)
         {
             _dataService = dataService;
-            
+
             _dataService.GetWorkSession(
                 (item, error) =>
                 {
@@ -65,14 +54,14 @@ namespace TrackMvvm.ViewModel
 
                     StopCommand = new RelayCommand(OnStop);
                     AddTaskCommand = new RelayCommand(OnAddTask);
-                    CloseCommand = new RelayCommand(OnClosing);                    
+                    CloseCommand = new RelayCommand(OnClosing);
 
                     saveSessionTimer.Tick += saveSessionTimer_Tick;
                     saveSessionTimer.Interval = TimeSpan.FromMinutes(1);
                     saveSessionTimer.Start();
                 });
 
-            HistoryCommand  = new RelayCommand(ShowHistory);
+            HistoryCommand = new RelayCommand(ShowHistory);
         }
 
         private void WorkSession_TaskRemoved(string taskName)
@@ -94,7 +83,7 @@ namespace TrackMvvm.ViewModel
 
         private void WorkSession_TaskStarted(string taskName)
         {
-            Messenger.Default.Send(new NotificationMessage<string>(taskName, null), MessengerActions.TaskStarted);
+            WeakReferenceMessenger.Default.Send(new TaskStartedMessage(taskName));
         }
 
         private void WorkSession_TaskAdded(object sender, TaskTime addedTaskTime)
@@ -109,13 +98,20 @@ namespace TrackMvvm.ViewModel
 
         private void OnAddTask()
         {
-            Messenger.Default.Send(
-                new NotificationMessageWithCallback(null, (Action<string>) this.TaskNameReceived), MessengerActions.AddTaskDialog);
+            System.Diagnostics.Debug.WriteLine("Sending message...");
+            WeakReferenceMessenger.Default.Send(
+                new AddTaskDialogMessage(taskName =>
+                {
+                    // Handle the result of the dialog
+                    System.Diagnostics.Debug.WriteLine($"Task name received: {taskName}");
+                    TaskNameReceived(taskName);
+                }),
+                "MainWindow");
         }
 
         private void OnStop()
         {
-            Messenger.Default.Send(new NotificationMessage<string>("", null), MessengerActions.TaskStarted);
+            WeakReferenceMessenger.Default.Send(new TaskStartedMessage(""));
             WorkSession.Stop();
         }
 
@@ -126,7 +122,7 @@ namespace TrackMvvm.ViewModel
             WorkSessionHistoryViewModel historyViewModel = new WorkSessionHistoryViewModel();
             historyViewModel.SetWorkSessionHistory(workSessionHistory);
 
-            Messenger.Default.Send(new NotificationMessageWithCallback(null, historyViewModel, null, (Action<bool>)this.OnHistoryDeleting), MessengerActions.ShowHistory);
+            WeakReferenceMessenger.Default.Send(new ShowHistoryMessage(historyViewModel, this.OnHistoryDeleting));
         }
 
         private void OnHistoryDeleting(bool deleteHistory)
@@ -142,11 +138,16 @@ namespace TrackMvvm.ViewModel
             WorkSession.AddTask(name);
         }
 
-        ////public override void Cleanup()
-        ////{
-        ////    // Clean up if needed
+        // Optional: Override for cleanup if needed
+        // protected override void OnActivated()
+        // {
+        //     base.OnActivated();
+        // }
 
-        ////    base.Cleanup();
-        ////}
+        // protected override void OnDeactivated()
+        // {
+        //     // Clean up if needed
+        //     base.OnDeactivated();
+        // }
     }
 }
