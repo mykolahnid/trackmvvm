@@ -56,6 +56,74 @@ namespace TrackMvvm
             WeakReferenceMessenger.Default.Register<ShowHistoryMessage>(this, (r, m) => OnShowHistory(m));
 
             Closing += (s, e) => ViewModelLocator.Cleanup();
+            Loaded += MainWindow_Loaded;
+        }
+
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Get Supabase service from DI
+            var supabaseService = ViewModelLocator.SupabaseService;
+
+            if (supabaseService != null)
+            {
+                if (!await HandleAuthenticationAsync(supabaseService))
+                {
+                    // Authentication failed or cancelled - close app
+                    Application.Current.Shutdown();
+                }
+            }
+        }
+
+        private async System.Threading.Tasks.Task<bool> HandleAuthenticationAsync(Services.ISupabaseService supabaseService)
+        {
+            // Check for stored credentials
+            var storedCreds = Utilities.CredentialStorage.RetrieveCredentials();
+
+            if (storedCreds.HasValue)
+            {
+                // Try to authenticate with stored credentials
+                var success = await supabaseService.AuthenticateAsync(
+                    storedCreds.Value.Email,
+                    storedCreds.Value.Password);
+
+                if (success)
+                    return true; // Authentication successful
+            }
+
+            // No stored credentials or authentication failed - show login dialog
+            var loginDialog = new LoginDialog();
+            var result = loginDialog.ShowDialog();
+
+            if (result == true)
+            {
+                var viewModel = loginDialog.ViewModel;
+
+                var authSuccess = await supabaseService.AuthenticateAsync(
+                    viewModel.Email,
+                    viewModel.Password);
+
+                if (authSuccess)
+                {
+                    // Store credentials if "Remember Me" is checked
+                    if (viewModel.RememberMe)
+                    {
+                        Utilities.CredentialStorage.StoreCredentials(viewModel.Email, viewModel.Password);
+                    }
+                    return true;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Authentication failed. Please check your credentials and try again.",
+                        "Login Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    return false;
+                }
+            }
+
+            // User cancelled
+            return false;
         }
 
         private static void OnShowHistory(ShowHistoryMessage message)
