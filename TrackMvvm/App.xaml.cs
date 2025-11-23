@@ -21,65 +21,89 @@ namespace TrackMvvm
         {
             base.OnStartup(e);
 
-            // Get Supabase service from DI
-            var supabaseService = ViewModel.ViewModelLocator.SupabaseService;
-
-            // If Supabase is configured, handle authentication
-            if (supabaseService != null)
+            try
             {
-                await AuthenticateAsync(supabaseService);
+                // Get Supabase service from DI
+                var supabaseService = ViewModel.ViewModelLocator.SupabaseService;
+
+                // If Supabase is configured, handle authentication
+                if (supabaseService != null)
+                {
+                    await AuthenticateAsync(supabaseService);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Startup error: {ex.Message}\n\nStack trace:\n{ex.StackTrace}",
+                    "Critical Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Current.Shutdown();
             }
         }
 
         private static async Task AuthenticateAsync(ISupabaseService supabaseService)
         {
-            // Check for stored credentials
-            var storedCreds = CredentialStorage.RetrieveCredentials();
-
-            if (storedCreds.HasValue)
+            try
             {
-                // Try to authenticate with stored credentials
-                var success = await supabaseService.AuthenticateAsync(
-                    storedCreds.Value.Email,
-                    storedCreds.Value.Password);
+                // Check for stored credentials
+                var storedCreds = CredentialStorage.RetrieveCredentials();
 
-                if (success)
-                    return; // Authentication successful
-            }
-
-            // No stored credentials or authentication failed - show login dialog
-            var loginDialog = new LoginDialog();
-            var result = loginDialog.ShowDialog();
-
-            if (result == true)
-            {
-                var viewModel = loginDialog.ViewModel;
-                var authSuccess = await supabaseService.AuthenticateAsync(
-                    viewModel.Email,
-                    viewModel.Password);
-
-                if (authSuccess)
+                if (storedCreds.HasValue)
                 {
-                    // Store credentials if "Remember Me" is checked
-                    if (viewModel.RememberMe)
+                    // Try to authenticate with stored credentials
+                    var success = await supabaseService.AuthenticateAsync(
+                        storedCreds.Value.Email,
+                        storedCreds.Value.Password);
+
+                    if (success)
+                        return; // Authentication successful
+                }
+
+                // No stored credentials or authentication failed - show login dialog
+                var loginDialog = new LoginDialog();
+                var result = loginDialog.ShowDialog();
+
+                if (result == true)
+                {
+                    var viewModel = loginDialog.ViewModel;
+                    var authSuccess = await supabaseService.AuthenticateAsync(
+                        viewModel.Email,
+                        viewModel.Password);
+
+                    if (authSuccess)
                     {
-                        CredentialStorage.StoreCredentials(viewModel.Email, viewModel.Password);
+                        // Store credentials if "Remember Me" is checked
+                        if (viewModel.RememberMe)
+                        {
+                            CredentialStorage.StoreCredentials(viewModel.Email, viewModel.Password);
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show(
+                            "Authentication failed. Please check your credentials and try again.",
+                            "Login Error",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+
+                        Current.Shutdown();
                     }
                 }
                 else
                 {
-                    MessageBox.Show(
-                        "Authentication failed. Please check your credentials and try again.",
-                        "Login Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
-
+                    // User cancelled login
                     Current.Shutdown();
                 }
             }
-            else
+            catch (Exception ex)
             {
-                // User cancelled login
+                MessageBox.Show(
+                    $"Authentication error: {ex.Message}\n\nStack trace:\n{ex.StackTrace}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
                 Current.Shutdown();
             }
         }
