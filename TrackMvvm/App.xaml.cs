@@ -21,38 +21,14 @@ namespace TrackMvvm
         {
             base.OnStartup(e);
 
-            // Try to get Supabase service from DI
-            var supabaseService = Current.TryFindResource("Locator") is ViewModel.ViewModelLocator locator
-                ? GetSupabaseServiceFromLocator()
-                : null;
+            // Get Supabase service from DI
+            var supabaseService = ViewModel.ViewModelLocator.SupabaseService;
 
             // If Supabase is configured, handle authentication
             if (supabaseService != null)
             {
                 await AuthenticateAsync(supabaseService);
             }
-        }
-
-        private static ISupabaseService? GetSupabaseServiceFromLocator()
-        {
-            try
-            {
-                // Access service provider via reflection to get ISupabaseService
-                var locatorType = typeof(ViewModel.ViewModelLocator);
-                var serviceProviderField = locatorType.GetField("_serviceProvider",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-
-                if (serviceProviderField?.GetValue(null) is IServiceProvider serviceProvider)
-                {
-                    return serviceProvider.GetService<ISupabaseService>();
-                }
-            }
-            catch
-            {
-                // Supabase not configured
-            }
-
-            return null;
         }
 
         private static async Task AuthenticateAsync(ISupabaseService supabaseService)
