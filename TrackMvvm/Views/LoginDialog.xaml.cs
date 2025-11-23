@@ -19,11 +19,22 @@ public partial class LoginDialog : Window
 
     private void LoginButton_Click(object sender, RoutedEventArgs e)
     {
-        if (ViewModel.DialogResult)
+        // Validate
+        if (string.IsNullOrWhiteSpace(ViewModel.Email))
         {
-            DialogResult = true;
-            Close();
+            ViewModel.ErrorMessage = "Please enter your email";
+            return;
         }
+
+        if (string.IsNullOrWhiteSpace(ViewModel.Password))
+        {
+            ViewModel.ErrorMessage = "Please enter your password";
+            return;
+        }
+
+        // Close dialog with success
+        DialogResult = true;
+        Close();
     }
 
     private void CancelButton_Click(object sender, RoutedEventArgs e)

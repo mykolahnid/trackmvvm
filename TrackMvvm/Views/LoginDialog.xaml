@@ -75,13 +75,11 @@
                     Width="80"
                     Height="32"
                     Margin="0,0,10,0"
-                    Command="{Binding CancelCommand}"
                     Click="CancelButton_Click"/>
             <Button Content="Login"
                     Width="80"
                     Height="32"
                     IsDefault="True"
-                    Command="{Binding LoginCommand}"
                     Click="LoginButton_Click">
                 <Button.Style>
                     <Style TargetType="Button">
