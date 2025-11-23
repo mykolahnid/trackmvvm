@@ -77,6 +77,7 @@ namespace TrackMvvm.Services
     {
         private readonly Supabase.Client _client;
         private Action<string, string?>? _onActiveTrackingChanged;
+        private bool _initialized = false;
 
         public bool IsAuthenticated => _client.Auth.CurrentUser != null;
         public string? UserId => _client.Auth.CurrentUser?.Id;
@@ -91,15 +92,30 @@ namespace TrackMvvm.Services
             _client = new Supabase.Client(url, anonKey, options);
         }
 
+        private async Task EnsureInitializedAsync()
+        {
+            if (!_initialized)
+            {
+                await _client.InitializeAsync();
+                _initialized = true;
+            }
+        }
+
         public async Task<bool> AuthenticateAsync(string email, string password)
         {
             try
             {
+                await EnsureInitializedAsync();
                 var session = await _client.Auth.SignIn(email, password);
                 return session?.User != null;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Windows.MessageBox.Show(
+                    $"Authentication error: {ex.Message}\n\nPlease check your credentials and Supabase configuration.",
+                    "Error",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Error);
                 return false;
             }
         }
@@ -124,6 +140,8 @@ namespace TrackMvvm.Services
 
             try
             {
+                await EnsureInitializedAsync();
+
                 // Upsert work_session
                 var sessionDb = new Models.WorkSessionDb
                 {
@@ -172,6 +190,8 @@ namespace TrackMvvm.Services
 
             try
             {
+                await EnsureInitializedAsync();
+
                 var today = DateTime.Today;
 
                 // Get today's session
@@ -217,6 +237,8 @@ namespace TrackMvvm.Services
 
             try
             {
+                await EnsureInitializedAsync();
+
                 // Last-writer-wins: Just upsert active_tracking
                 var activeTracking = new Models.ActiveTrackingDb
                 {
@@ -246,6 +268,8 @@ namespace TrackMvvm.Services
 
             try
             {
+                await EnsureInitializedAsync();
+
                 // Clear active tracking
                 var activeTracking = new Models.ActiveTrackingDb
                 {
@@ -275,6 +299,8 @@ namespace TrackMvvm.Services
 
             try
             {
+                await EnsureInitializedAsync();
+
                 // Get current active tracking and update timestamp
                 var current = await _client
                     .From<Models.ActiveTrackingDb>()
