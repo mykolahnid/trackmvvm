@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Postgrest.Attributes;
@@ -276,16 +275,19 @@ namespace TrackMvvm.Services
 
             try
             {
-                // Just update the timestamp
-                var update = new Dictionary<string, object>
-                {
-                    { "updated_at", DateTime.UtcNow }
-                };
-
-                await _client
+                // Get current active tracking and update timestamp
+                var current = await _client
                     .From<Models.ActiveTrackingDb>()
                     .Where(x => x.UserId == UserId)
-                    .Update(update);
+                    .Single();
+
+                if (current != null)
+                {
+                    current.UpdatedAt = DateTime.UtcNow;
+                    await _client
+                        .From<Models.ActiveTrackingDb>()
+                        .Update(current);
+                }
 
                 return true;
             }
