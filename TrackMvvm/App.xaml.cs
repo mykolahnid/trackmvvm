@@ -68,9 +68,14 @@ namespace TrackMvvm
                 if (result == true)
                 {
                     var viewModel = loginDialog.ViewModel;
+
+                    MessageBox.Show($"Attempting to authenticate with:\nEmail: {viewModel.Email}\nPassword length: {viewModel.Password?.Length ?? 0}", "Debug");
+
                     var authSuccess = await supabaseService.AuthenticateAsync(
                         viewModel.Email,
                         viewModel.Password);
+
+                    MessageBox.Show($"Authentication result: {authSuccess}", "Debug");
 
                     if (authSuccess)
                     {
