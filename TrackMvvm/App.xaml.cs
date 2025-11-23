@@ -17,7 +17,7 @@ namespace TrackMvvm
         {
         }
 
-        protected override async void OnStartup(StartupEventArgs e)
+        protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
@@ -26,10 +26,10 @@ namespace TrackMvvm
                 // Get Supabase service from DI
                 var supabaseService = ViewModel.ViewModelLocator.SupabaseService;
 
-                // If Supabase is configured, handle authentication
+                // If Supabase is configured, handle authentication (synchronously)
                 if (supabaseService != null)
                 {
-                    await AuthenticateAsync(supabaseService);
+                    AuthenticateAsync(supabaseService).GetAwaiter().GetResult();
                 }
 
                 // Authentication successful - create and show main window
