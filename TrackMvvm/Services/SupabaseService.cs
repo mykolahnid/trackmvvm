@@ -103,11 +103,6 @@ namespace TrackMvvm.Services
 
         public async Task<bool> AuthenticateAsync(string email, string password)
         {
-            // TEMPORARY: Bypass authentication for testing
-            await Task.Delay(100); // Simulate async call
-            return true;
-
-            /* TODO: Re-enable real authentication once app flow is verified
             try
             {
                 await EnsureInitializedAsync();
@@ -123,7 +118,6 @@ namespace TrackMvvm.Services
                     System.Windows.MessageBoxImage.Error);
                 return false;
             }
-            */
         }
 
         public async Task SignOutAsync()
