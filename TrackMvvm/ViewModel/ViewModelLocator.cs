@@ -11,9 +11,12 @@
 
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TrackMvvm.Model;
+using TrackMvvm.Services;
 
 namespace TrackMvvm.ViewModel
 {
@@ -34,6 +37,12 @@ namespace TrackMvvm.ViewModel
         {
             var services = new ServiceCollection();
 
+            // Load configuration
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                .AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: false)
+                .Build();
+
             // Register data services
             if (IsInDesignMode)
             {
@@ -42,6 +51,16 @@ namespace TrackMvvm.ViewModel
             else
             {
                 services.AddSingleton<IDataService, DataService>();
+
+                // Register Supabase service if configuration exists
+                var supabaseUrl = configuration["Supabase:Url"];
+                var supabaseKey = configuration["Supabase:AnonKey"];
+
+                if (!string.IsNullOrEmpty(supabaseUrl) && !string.IsNullOrEmpty(supabaseKey))
+                {
+                    services.AddSingleton<ISupabaseService>(sp =>
+                        new SupabaseService(supabaseUrl, supabaseKey));
+                }
             }
 
             // Register ViewModels

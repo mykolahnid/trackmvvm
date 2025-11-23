@@ -1,0 +1,6 @@
+{
+  "Supabase": {
+    "Url": "https://your-project-id.supabase.co",
+    "AnonKey": "your-anon-public-key-here"
+  }
+}
