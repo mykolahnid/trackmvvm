@@ -31,6 +31,10 @@ namespace TrackMvvm
                 {
                     await AuthenticateAsync(supabaseService);
                 }
+
+                // Authentication successful - create and show main window
+                var mainWindow = new MainWindow();
+                mainWindow.Show();
             }
             catch (Exception ex)
             {
