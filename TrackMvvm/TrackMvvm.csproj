@@ -30,4 +30,9 @@
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
 		<PackageReference Include="supabase-csharp" Version="0.16.2" />
 	</ItemGroup>
+	<ItemGroup>
+		<None Update="appsettings.local.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 </Project>
