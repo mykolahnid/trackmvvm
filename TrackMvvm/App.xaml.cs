@@ -69,13 +69,9 @@ namespace TrackMvvm
                 {
                     var viewModel = loginDialog.ViewModel;
 
-                    MessageBox.Show($"Attempting to authenticate with:\nEmail: {viewModel.Email}\nPassword length: {viewModel.Password?.Length ?? 0}", "Debug");
-
                     var authSuccess = await supabaseService.AuthenticateAsync(
                         viewModel.Email,
                         viewModel.Password);
-
-                    MessageBox.Show($"Authentication result: {authSuccess}", "Debug");
 
                     if (authSuccess)
                     {
@@ -84,14 +80,21 @@ namespace TrackMvvm
                         {
                             CredentialStorage.StoreCredentials(viewModel.Email, viewModel.Password);
                         }
+
+                        // Authentication successful - continue to main window
+                        return;
                     }
                     else
                     {
-                        MessageBox.Show(
-                            "Authentication failed. Please check your credentials and try again.",
-                            "Login Error",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Error);
+                        // Authentication failed - show error and exit
+                        Current.Dispatcher.Invoke(() =>
+                        {
+                            MessageBox.Show(
+                                "Authentication failed. Please check your credentials and try again.",
+                                "Login Error",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+                        });
 
                         Current.Shutdown();
                     }
