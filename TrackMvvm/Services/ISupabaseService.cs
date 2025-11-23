@@ -56,9 +56,9 @@ public interface ISupabaseService
 
     /// <summary>
     /// Subscribe to active tracking changes (Realtime)
-    /// Returns device ID and task name when another device starts tracking
+    /// Callback parameters: deviceId (string), taskName (string?)
     /// </summary>
-    void SubscribeToActiveTracking(Action<string deviceId, string? taskName> onChanged);
+    void SubscribeToActiveTracking(Action<string, string?> onChanged);
 
     /// <summary>
     /// Unsubscribe from active tracking changes
