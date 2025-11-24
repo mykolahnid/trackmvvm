@@ -150,15 +150,9 @@ namespace TrackMvvm.Services
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                var sessionUpsertOptions = new Postgrest.Models.QueryOptions
-                {
-                    Upsert = true,
-                    UpsertConflictResolution = "user_id,session_date"
-                };
-
                 var sessionResult = await _client
                     .From<Models.WorkSessionDb>()
-                    .Upsert(sessionDb, sessionUpsertOptions);
+                    .Upsert(sessionDb, onConflict: "user_id,session_date");
 
                 if (sessionResult?.Models?.Count == 0)
                     return false;
@@ -176,15 +170,9 @@ namespace TrackMvvm.Services
                         UpdatedAt = DateTime.UtcNow
                     };
 
-                    var taskUpsertOptions = new Postgrest.Models.QueryOptions
-                    {
-                        Upsert = true,
-                        UpsertConflictResolution = "session_id,task_name"
-                    };
-
                     await _client
                         .From<Models.TaskTimeDb>()
-                        .Upsert(taskDb, taskUpsertOptions);
+                        .Upsert(taskDb, onConflict: "session_id,task_name");
                 }
 
                 return true;
