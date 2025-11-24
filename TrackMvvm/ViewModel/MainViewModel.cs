@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Threading;
 using TrackMvvm.Model;
 
@@ -36,6 +37,15 @@ namespace TrackMvvm.ViewModel
             _dataService = dataService;
             _syncService = syncService;
 
+            // Listen for authentication completion to trigger sync
+            WeakReferenceMessenger.Default.Register<AuthenticationCompletedMessage>(this, async (r, m) =>
+            {
+                if (m.Success && _syncService != null && WorkSession != null)
+                {
+                    await PullAndMergeRemoteDataAsync();
+                }
+            });
+
             _dataService.GetWorkSession(
                 async (item, error) =>
                 {
@@ -49,22 +59,8 @@ namespace TrackMvvm.ViewModel
                     WorkSession.TaskStarted += this.WorkSession_TaskStarted;
                     WorkSession.TaskRemoved += this.WorkSession_TaskRemoved;
 
-                    // Pull and merge remote data if sync is available
-                    if (_syncService != null)
-                    {
-                        try
-                        {
-                            var remoteSession = await _syncService.PullSessionAsync();
-                            if (remoteSession != null)
-                            {
-                                WorkSession = Services.SyncService.MergeSessions(WorkSession, remoteSession);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Failed to pull remote session: {ex.Message}");
-                        }
-                    }
+                    // Don't pull here - wait for authentication to complete
+                    // Pull will happen when AuthenticationCompletedMessage is received
 
                     foreach (var t in WorkSession.Tasks)
                     {
@@ -82,6 +78,47 @@ namespace TrackMvvm.ViewModel
                 });
 
             HistoryCommand = new RelayCommand(ShowHistory);
+        }
+
+        private async System.Threading.Tasks.Task PullAndMergeRemoteDataAsync()
+        {
+            if (_syncService == null || WorkSession == null)
+                return;
+
+            try
+            {
+                var remoteSession = await _syncService.PullSessionAsync();
+                if (remoteSession != null)
+                {
+                    var merged = Services.SyncService.MergeSessions(WorkSession, remoteSession);
+
+                    // Update existing tasks with merged durations
+                    foreach (var mergedTask in merged.Tasks)
+                    {
+                        var existingTask = WorkSession.Tasks.FirstOrDefault(t => t.Name == mergedTask.Name);
+                        if (existingTask != null)
+                        {
+                            existingTask.Duration = mergedTask.Duration;
+                        }
+                        else
+                        {
+                            // Add new task from remote
+                            WorkSession.AddTask(mergedTask.Name);
+                            var newTask = WorkSession.Tasks.First(t => t.Name == mergedTask.Name);
+                            newTask.Duration = mergedTask.Duration;
+
+                            var taskTimeViewModel = new TaskTimeViewModel(newTask);
+                            TasksCollection.Add(taskTimeViewModel);
+                        }
+                    }
+
+                    System.Diagnostics.Debug.WriteLine("Successfully pulled and merged remote session after authentication");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to pull remote session: {ex.Message}");
+            }
         }
 
         private void WorkSession_TaskRemoved(string taskName)

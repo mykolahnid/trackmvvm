@@ -34,6 +34,12 @@ namespace TrackMvvm
         }
     }
 
+    public class AuthenticationCompletedMessage
+    {
+        public bool Success { get; set; }
+        public AuthenticationCompletedMessage(bool success) => Success = success;
+    }
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -66,7 +72,12 @@ namespace TrackMvvm
 
             if (supabaseService != null)
             {
-                if (!await HandleAuthenticationAsync(supabaseService))
+                bool authSuccess = await HandleAuthenticationAsync(supabaseService);
+
+                // Notify ViewModels about authentication result
+                WeakReferenceMessenger.Default.Send(new AuthenticationCompletedMessage(authSuccess));
+
+                if (!authSuccess)
                 {
                     // Authentication failed or cancelled - close app
                     Application.Current.Shutdown();
