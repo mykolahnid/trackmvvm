@@ -14,6 +14,7 @@ namespace TrackMvvm.ViewModel
     public partial class MainViewModel : ObservableObject
     {
         private readonly IDataService _dataService;
+        private readonly Services.ISyncService? _syncService;
 
         public ObservableCollection<TaskTimeViewModel> TasksCollection { get; set; } = new ObservableCollection<TaskTimeViewModel>();
 
@@ -30,9 +31,10 @@ namespace TrackMvvm.ViewModel
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
-        public MainViewModel(IDataService dataService)
+        public MainViewModel(IDataService dataService, Services.ISyncService syncService = null)
         {
             _dataService = dataService;
+            _syncService = syncService;
 
             _dataService.GetWorkSession(
                 (item, error) =>

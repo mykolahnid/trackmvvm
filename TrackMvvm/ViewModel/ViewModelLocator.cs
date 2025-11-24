@@ -60,6 +60,10 @@ namespace TrackMvvm.ViewModel
                 {
                     services.AddSingleton<ISupabaseService>(sp =>
                         new SupabaseService(supabaseUrl, supabaseKey));
+
+                    // Register Sync service (depends on Supabase service)
+                    services.AddSingleton<ISyncService>(sp =>
+                        new SyncService(sp.GetRequiredService<ISupabaseService>()));
                 }
             }
 
