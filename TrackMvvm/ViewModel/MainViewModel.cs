@@ -37,7 +37,7 @@ namespace TrackMvvm.ViewModel
             _syncService = syncService;
 
             _dataService.GetWorkSession(
-                (item, error) =>
+                async (item, error) =>
                 {
                     if (error != null)
                     {
@@ -48,6 +48,24 @@ namespace TrackMvvm.ViewModel
                     WorkSession.TaskAdded += this.WorkSession_TaskAdded;
                     WorkSession.TaskStarted += this.WorkSession_TaskStarted;
                     WorkSession.TaskRemoved += this.WorkSession_TaskRemoved;
+
+                    // Pull and merge remote data if sync is available
+                    if (_syncService != null)
+                    {
+                        try
+                        {
+                            var remoteSession = await _syncService.PullSessionAsync();
+                            if (remoteSession != null)
+                            {
+                                WorkSession = Services.SyncService.MergeSessions(WorkSession, remoteSession);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Failed to pull remote session: {ex.Message}");
+                        }
+                    }
+
                     foreach (var t in WorkSession.Tasks)
                     {
                         var taskTimeViewModel = new TaskTimeViewModel(t);
@@ -78,14 +96,40 @@ namespace TrackMvvm.ViewModel
             }
         }
 
-        private void saveSessionTimer_Tick(object sender, EventArgs e)
+        private async void saveSessionTimer_Tick(object sender, EventArgs e)
         {
             _dataService.SaveWorkSession(WorkSession);
+
+            // Push to Supabase if sync is available
+            if (_syncService != null)
+            {
+                try
+                {
+                    await _syncService.PushSessionAsync(WorkSession);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to push session: {ex.Message}");
+                }
+            }
         }
 
-        private void WorkSession_TaskStarted(string taskName)
+        private async void WorkSession_TaskStarted(string taskName)
         {
             WeakReferenceMessenger.Default.Send(new TaskStartedMessage(taskName));
+
+            // Update active tracking with last-writer-wins
+            if (_syncService != null && !string.IsNullOrEmpty(taskName))
+            {
+                try
+                {
+                    await _syncService.StartTaskAsync(taskName);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to start task tracking: {ex.Message}");
+                }
+            }
         }
 
         private void WorkSession_TaskAdded(object sender, TaskTime addedTaskTime)
@@ -93,9 +137,22 @@ namespace TrackMvvm.ViewModel
             TasksCollection.Add(new TaskTimeViewModel(addedTaskTime));
         }
 
-        private void OnClosing()
+        private async void OnClosing()
         {
             _dataService.SaveWorkSession(WorkSession);
+
+            // Push to Supabase if sync is available
+            if (_syncService != null)
+            {
+                try
+                {
+                    await _syncService.PushSessionAsync(WorkSession);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to push session on close: {ex.Message}");
+                }
+            }
         }
 
         private void OnAddTask()
@@ -111,10 +168,23 @@ namespace TrackMvvm.ViewModel
                 "MainWindow");
         }
 
-        private void OnStop()
+        private async void OnStop()
         {
             WeakReferenceMessenger.Default.Send(new TaskStartedMessage(""));
             WorkSession.Stop();
+
+            // Clear active tracking
+            if (_syncService != null)
+            {
+                try
+                {
+                    await _syncService.StopTaskAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to stop task tracking: {ex.Message}");
+                }
+            }
         }
 
         private void ShowHistory()
