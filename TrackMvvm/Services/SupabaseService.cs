@@ -171,6 +171,7 @@ namespace TrackMvvm.Services
                     {
                         UserId = UserId,
                         SessionDate = session.Today.Date,
+                        CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
                     };
 
