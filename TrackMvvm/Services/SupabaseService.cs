@@ -147,10 +147,14 @@ namespace TrackMvvm.Services
             {
                 await EnsureInitializedAsync();
 
+                // Always use actual current date, not the date from the session object
+                // (session might be from yesterday's XML file)
+                var today = DateTime.Today;
+
                 // Try to get existing session for today
                 var existingSession = await _client
                     .From<Models.WorkSessionDb>()
-                    .Where(s => s.UserId == UserId && s.SessionDate == session.Today.Date)
+                    .Where(s => s.UserId == UserId && s.SessionDate == today)
                     .Single();
 
                 Guid sessionId;
@@ -170,7 +174,7 @@ namespace TrackMvvm.Services
                     var newSession = new Models.WorkSessionDb
                     {
                         UserId = UserId,
-                        SessionDate = session.Today.Date,
+                        SessionDate = today,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
                     };
