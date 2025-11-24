@@ -226,7 +226,8 @@ await _syncService.StopTaskAsync();
 2. ✅ Async/await in WPF: Moved auth to MainWindow.Loaded
 3. ✅ API compatibility: Adjusted to Postgrest.Attributes for 0.16.2
 4. ✅ Config file not copying: Added CopyToOutputDirectory in csproj
-5. ✅ Guid.Empty IDs: Fixed by using UpsertConflictResolution with UNIQUE constraints
+5. ✅ Guid.Empty IDs: Fixed by using fetch-then-insert-or-update pattern
+6. ✅ Authentication timing: Added AuthenticationCompletedMessage to trigger sync after auth
 
 ### Current Limitations (Phase 2)
 - ⚠️ **Not real-time yet**: Changes only sync on app restart or timer tick
