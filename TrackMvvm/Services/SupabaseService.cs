@@ -90,6 +90,7 @@ namespace TrackMvvm.Services
             };
 
             _client = new Supabase.Client(url, anonKey, options);
+            System.Diagnostics.Debug.WriteLine($"[SupabaseService] Instance created. HashCode: {this.GetHashCode()}");
         }
 
         private async Task EnsureInitializedAsync()
@@ -105,12 +106,16 @@ namespace TrackMvvm.Services
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] AuthenticateAsync called");
                 await EnsureInitializedAsync();
                 var session = await _client.Auth.SignIn(email, password);
-                return session?.User != null;
+                bool success = session?.User != null;
+                System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] Authentication {(success ? "successful" : "failed")}. CurrentUser: {_client.Auth.CurrentUser?.Id}");
+                return success;
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] Authentication exception: {ex.Message}");
                 System.Windows.MessageBox.Show(
                     $"Authentication error: {ex.Message}\n\nPlease check your credentials and Supabase configuration.",
                     "Error",

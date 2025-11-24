@@ -16,6 +16,7 @@ public class SyncService : ISyncService
     {
         _supabaseService = supabaseService;
         _deviceId = Environment.MachineName;
+        System.Diagnostics.Debug.WriteLine($"[SyncService] Created with SupabaseService HashCode: {supabaseService.GetHashCode()}");
     }
 
     public async Task<bool> PushSessionAsync(WorkSession session)
@@ -28,10 +29,17 @@ public class SyncService : ISyncService
 
     public async Task<WorkSession?> PullSessionAsync()
     {
-        if (!_supabaseService.IsAuthenticated)
-            return null;
+        System.Diagnostics.Debug.WriteLine($"[SyncService] PullSessionAsync called. IsAuthenticated: {_supabaseService.IsAuthenticated}");
 
-        return await _supabaseService.GetTodaySessionAsync();
+        if (!_supabaseService.IsAuthenticated)
+        {
+            System.Diagnostics.Debug.WriteLine("[SyncService] Not authenticated, returning null");
+            return null;
+        }
+
+        var result = await _supabaseService.GetTodaySessionAsync();
+        System.Diagnostics.Debug.WriteLine($"[SyncService] GetTodaySessionAsync returned: {(result != null ? "Session with " + result.Tasks.Count + " tasks" : "null")}");
+        return result;
     }
 
     public async Task<bool> StartTaskAsync(string taskName)

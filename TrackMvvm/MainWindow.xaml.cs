@@ -70,9 +70,13 @@ namespace TrackMvvm
             // Get Supabase service from DI
             var supabaseService = ViewModelLocator.SupabaseService;
 
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Got SupabaseService from DI. HashCode: {supabaseService?.GetHashCode()}");
+
             if (supabaseService != null)
             {
                 bool authSuccess = await HandleAuthenticationAsync(supabaseService);
+
+                System.Diagnostics.Debug.WriteLine($"[MainWindow] Authentication completed. Success: {authSuccess}");
 
                 // Notify ViewModels about authentication result
                 WeakReferenceMessenger.Default.Send(new AuthenticationCompletedMessage(authSuccess));
