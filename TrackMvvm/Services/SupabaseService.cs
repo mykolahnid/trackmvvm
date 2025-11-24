@@ -142,7 +142,7 @@ namespace TrackMvvm.Services
             {
                 await EnsureInitializedAsync();
 
-                // Upsert work_session
+                // Upsert work_session using the UNIQUE constraint (user_id, session_date)
                 var sessionDb = new Models.WorkSessionDb
                 {
                     UserId = UserId,
@@ -150,16 +150,22 @@ namespace TrackMvvm.Services
                     UpdatedAt = DateTime.UtcNow
                 };
 
+                var sessionUpsertOptions = new Postgrest.Models.QueryOptions
+                {
+                    Upsert = true,
+                    UpsertConflictResolution = "user_id,session_date"
+                };
+
                 var sessionResult = await _client
                     .From<Models.WorkSessionDb>()
-                    .Upsert(sessionDb);
+                    .Upsert(sessionDb, sessionUpsertOptions);
 
                 if (sessionResult?.Models?.Count == 0)
                     return false;
 
                 var sessionId = sessionResult!.Models[0].Id;
 
-                // Upsert all tasks
+                // Upsert all tasks using the UNIQUE constraint (session_id, task_name)
                 foreach (var task in session.Tasks)
                 {
                     var taskDb = new Models.TaskTimeDb
@@ -170,9 +176,15 @@ namespace TrackMvvm.Services
                         UpdatedAt = DateTime.UtcNow
                     };
 
+                    var taskUpsertOptions = new Postgrest.Models.QueryOptions
+                    {
+                        Upsert = true,
+                        UpsertConflictResolution = "session_id,task_name"
+                    };
+
                     await _client
                         .From<Models.TaskTimeDb>()
-                        .Upsert(taskDb);
+                        .Upsert(taskDb, taskUpsertOptions);
                 }
 
                 return true;
