@@ -230,13 +230,17 @@ namespace TrackMvvm.Services
         public async Task<WorkSession?> GetTodaySessionAsync()
         {
             if (!IsAuthenticated || UserId == null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] GetTodaySessionAsync: Not authenticated or no UserId");
                 return null;
+            }
 
             try
             {
                 await EnsureInitializedAsync();
 
                 var today = DateTime.Today;
+                System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] GetTodaySessionAsync: Querying for session on {today:yyyy-MM-dd}");
 
                 // Get today's session
                 var sessionResult = await _client
@@ -245,13 +249,20 @@ namespace TrackMvvm.Services
                     .Single();
 
                 if (sessionResult == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] GetTodaySessionAsync: No session found for today");
                     return null;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] GetTodaySessionAsync: Found session {sessionResult.Id}");
 
                 // Get all tasks for this session
                 var tasksResult = await _client
                     .From<Models.TaskTimeDb>()
                     .Where(t => t.SessionId == sessionResult.Id)
                     .Get();
+
+                System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] GetTodaySessionAsync: Found {tasksResult.Models.Count} tasks");
 
                 var workSession = new WorkSession();
                 workSession.Today = today;
@@ -268,8 +279,9 @@ namespace TrackMvvm.Services
 
                 return workSession;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] GetTodaySessionAsync exception: {ex.Message}");
                 return null;
             }
         }
