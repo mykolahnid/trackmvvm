@@ -151,6 +151,8 @@ namespace TrackMvvm.Services
                 // (session might be from yesterday's XML file)
                 var today = DateTime.Today;
 
+                System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] SyncSessionAsync: session.Today.Date={session.Today.Date:yyyy-MM-dd}, DateTime.Today={today:yyyy-MM-dd}");
+
                 // Try to get existing session for today
                 var existingSession = await _client
                     .From<Models.WorkSessionDb>()
