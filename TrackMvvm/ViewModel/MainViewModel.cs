@@ -288,9 +288,57 @@ namespace TrackMvvm.ViewModel
             {
                 try
                 {
+                    // First, check if we're overtaking another device's active task
+                    var previousTracking = await _syncService.GetActiveTrackingAsync();
+
+                    // Claim the task (overwrites previous device)
                     await _syncService.StartTaskAsync(taskName);
-                    _lastHeartbeatSent = DateTime.UtcNow; // Track when we claimed the task
+                    _lastHeartbeatSent = DateTime.UtcNow;
                     System.Diagnostics.Debug.WriteLine($"[Task Start] Started tracking '{taskName}', heartbeat timestamp set");
+
+                    // If we overtook another device with a fresh timestamp, capture their in-flight time
+                    if (previousTracking.HasValue)
+                    {
+                        var (prevDeviceId, prevTaskName, prevUpdatedAt) = previousTracking.Value;
+                        var ourDeviceId = Environment.MachineName;
+
+                        // Check if another device was tracking the same task recently (< 30 seconds)
+                        if (prevDeviceId != ourDeviceId &&
+                            prevTaskName == taskName &&
+                            prevUpdatedAt.HasValue)
+                        {
+                            var timeSinceLastUpdate = DateTime.UtcNow - prevUpdatedAt.Value;
+
+                            if (timeSinceLastUpdate.TotalSeconds < 30)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[Task Start] Overtaking device '{prevDeviceId}' - capturing in-flight time");
+
+                                // Pull the latest remote session to get the task's duration
+                                var remoteSession = await _syncService.PullSessionAsync();
+                                if (remoteSession != null)
+                                {
+                                    var remoteTask = remoteSession.Tasks.FirstOrDefault(t => t.Name == taskName);
+                                    if (remoteTask != null)
+                                    {
+                                        // Estimate their accumulated time: remote_duration + time_since_last_update
+                                        var estimatedRemoteDuration = remoteTask.Duration + timeSinceLastUpdate.TotalSeconds;
+                                        var localTask = WorkSession.Tasks.FirstOrDefault(t => t.Name == taskName);
+
+                                        if (localTask != null)
+                                        {
+                                            var localDuration = localTask.Duration;
+                                            var capturedDuration = Math.Max(localDuration, estimatedRemoteDuration);
+
+                                            System.Diagnostics.Debug.WriteLine($"[Task Start] In-flight capture: local={localDuration:F0}s, remote={remoteTask.Duration:F0}s + {timeSinceLastUpdate.TotalSeconds:F0}s = estimated={estimatedRemoteDuration:F0}s, using={capturedDuration:F0}s");
+
+                                            // Set the task to start from the higher value
+                                            localTask.Duration = capturedDuration;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
