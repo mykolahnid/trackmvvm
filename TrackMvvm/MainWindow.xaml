@@ -12,12 +12,7 @@
         mc:Ignorable="d ignore"
         Height="200.248"
         Width="454.331"
-        >    
-    <i:Interaction.Triggers>
-        <i:EventTrigger EventName="Closing">
-            <i:InvokeCommandAction Command="{Binding CloseCommand}" />
-        </i:EventTrigger>
-    </i:Interaction.Triggers>
+        >
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

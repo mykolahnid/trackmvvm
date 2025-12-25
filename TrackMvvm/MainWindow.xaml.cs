@@ -45,6 +45,8 @@ namespace TrackMvvm
     /// </summary>
     public partial class MainWindow : Window
     {
+        private bool _isClosingHandled = false;
+
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
         /// </summary>
@@ -61,8 +63,34 @@ namespace TrackMvvm
             WeakReferenceMessenger.Default.Register<TaskStartedMessage>(this, (r, m) => OnTaskStarted(m));
             WeakReferenceMessenger.Default.Register<ShowHistoryMessage>(this, (r, m) => OnShowHistory(m));
 
-            Closing += (s, e) => ViewModelLocator.Cleanup();
+            Closing += MainWindow_Closing;
             Loaded += MainWindow_Loaded;
+        }
+
+        private async void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (!_isClosingHandled)
+            {
+                // Cancel the first close attempt to allow async operations to complete
+                e.Cancel = true;
+                _isClosingHandled = true;
+
+                System.Diagnostics.Debug.WriteLine("[MainWindow] Closing event - waiting for async save");
+
+                // Get the MainViewModel and call its close method
+                if (DataContext is MainViewModel viewModel)
+                {
+                    await viewModel.OnClosingAsync();
+                }
+
+                // Cleanup
+                ViewModelLocator.Cleanup();
+
+                System.Diagnostics.Debug.WriteLine("[MainWindow] Async save complete, now closing");
+
+                // Now actually close the window
+                Close();
+            }
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)

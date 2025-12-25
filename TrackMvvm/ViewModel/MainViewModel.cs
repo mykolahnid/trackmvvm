@@ -24,7 +24,6 @@ namespace TrackMvvm.ViewModel
 
         public RelayCommand StopCommand { get; set; }
         public RelayCommand AddTaskCommand { get; set; }
-        public RelayCommand CloseCommand { get; set; }
         public RelayCommand HistoryCommand { get; set; }
 
         private readonly DispatcherTimer saveSessionTimer = new DispatcherTimer();
@@ -70,7 +69,6 @@ namespace TrackMvvm.ViewModel
 
                     StopCommand = new RelayCommand(OnStop);
                     AddTaskCommand = new RelayCommand(OnAddTask);
-                    CloseCommand = new RelayCommand(OnClosing);
 
                     saveSessionTimer.Tick += saveSessionTimer_Tick;
                     saveSessionTimer.Interval = TimeSpan.FromMinutes(1);
@@ -174,8 +172,9 @@ namespace TrackMvvm.ViewModel
             TasksCollection.Add(new TaskTimeViewModel(addedTaskTime));
         }
 
-        private async void OnClosing()
+        public async System.Threading.Tasks.Task OnClosingAsync()
         {
+            System.Diagnostics.Debug.WriteLine("[MainViewModel] OnClosingAsync called");
             _dataService.SaveWorkSession(WorkSession);
 
             // Push to Supabase if sync is available
@@ -183,11 +182,13 @@ namespace TrackMvvm.ViewModel
             {
                 try
                 {
+                    System.Diagnostics.Debug.WriteLine("[MainViewModel] Pushing session to Supabase on close...");
                     await _syncService.PushSessionAsync(WorkSession);
+                    System.Diagnostics.Debug.WriteLine("[MainViewModel] Successfully pushed session on close");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to push session on close: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Failed to push session on close: {ex.Message}");
                 }
             }
         }
