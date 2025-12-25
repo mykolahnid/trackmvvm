@@ -22,7 +22,7 @@ namespace TrackMvvm.Services
             public string UserId { get; set; } = string.Empty;
 
             [Column("session_date")]
-            public DateTime SessionDate { get; set; }
+            public DateOnly SessionDate { get; set; }
 
             [Column("created_at")]
             public DateTime CreatedAt { get; set; }
@@ -149,9 +149,9 @@ namespace TrackMvvm.Services
 
                 // Always use actual current date, not the date from the session object
                 // (session might be from yesterday's XML file)
-                var today = DateTime.Today;
+                var today = DateOnly.FromDateTime(DateTime.Today);
 
-                System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] SyncSessionAsync: session.Today.Date={session.Today.Date:yyyy-MM-dd}, DateTime.Today={today:yyyy-MM-dd}");
+                System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] SyncSessionAsync: session.Today.Date={session.Today.Date:yyyy-MM-dd}, DateOnly.Today={today:yyyy-MM-dd}");
 
                 // Try to get existing session for today
                 var existingSession = await _client
@@ -301,7 +301,7 @@ namespace TrackMvvm.Services
             {
                 await EnsureInitializedAsync();
 
-                var today = DateTime.Today;
+                var today = DateOnly.FromDateTime(DateTime.Today);
                 System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] GetTodaySessionAsync: Querying for session on {today:yyyy-MM-dd}");
 
                 // Get today's session
@@ -327,7 +327,7 @@ namespace TrackMvvm.Services
                 System.Diagnostics.Debug.WriteLine($"[SupabaseService {this.GetHashCode()}] GetTodaySessionAsync: Found {tasksResult.Models.Count} tasks");
 
                 var workSession = new WorkSession();
-                workSession.Today = today;
+                workSession.Today = today.ToDateTime(TimeOnly.MinValue);
 
                 foreach (var taskDb in tasksResult.Models)
                 {
