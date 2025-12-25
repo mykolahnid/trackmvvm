@@ -197,11 +197,11 @@ namespace TrackMvvm.ViewModel
                 // Check if another device has updated the tracking after our last heartbeat
                 if (deviceId != ourDeviceId && updatedAt.HasValue && _lastHeartbeatSent.HasValue)
                 {
-                    // Database returns UTC timestamps but with Unspecified Kind
-                    // We need to treat them as UTC for correct time comparisons
-                    var updatedAtUtc = new DateTime(
-                        updatedAt.Value.Ticks,
-                        DateTimeKind.Utc);
+                    // Supabase client converts UTC timestamps to local time
+                    // Convert back to UTC for correct time comparisons
+                    var updatedAtUtc = updatedAt.Value.Kind == DateTimeKind.Utc
+                        ? updatedAt.Value
+                        : updatedAt.Value.ToUniversalTime();
 
                     if (updatedAtUtc > _lastHeartbeatSent.Value)
                     {
@@ -313,11 +313,11 @@ namespace TrackMvvm.ViewModel
                             prevTaskName == taskName &&
                             prevUpdatedAt.HasValue)
                         {
-                            // Database returns UTC timestamps but with Unspecified Kind
-                            // We need to treat them as UTC for correct time calculations
-                            var prevUpdatedAtUtc = new DateTime(
-                                prevUpdatedAt.Value.Ticks,
-                                DateTimeKind.Utc);
+                            // Supabase client converts UTC timestamps to local time
+                            // Convert back to UTC for correct time calculations
+                            var prevUpdatedAtUtc = prevUpdatedAt.Value.Kind == DateTimeKind.Utc
+                                ? prevUpdatedAt.Value
+                                : prevUpdatedAt.Value.ToUniversalTime();
                             var timeSinceLastUpdate = DateTime.UtcNow - prevUpdatedAtUtc;
 
                             if (timeSinceLastUpdate.TotalSeconds < 30)
