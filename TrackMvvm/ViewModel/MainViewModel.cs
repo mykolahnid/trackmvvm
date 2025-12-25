@@ -27,6 +27,7 @@ namespace TrackMvvm.ViewModel
         public RelayCommand HistoryCommand { get; set; }
 
         private readonly DispatcherTimer saveSessionTimer = new DispatcherTimer();
+        private DateTime? _lastHeartbeatSent = null;
 
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
@@ -71,7 +72,7 @@ namespace TrackMvvm.ViewModel
                     AddTaskCommand = new RelayCommand(OnAddTask);
 
                     saveSessionTimer.Tick += saveSessionTimer_Tick;
-                    saveSessionTimer.Interval = TimeSpan.FromMinutes(1);
+                    saveSessionTimer.Interval = TimeSpan.FromSeconds(30); // Check conflicts + heartbeat every 30s
                     saveSessionTimer.Start();
                 });
 
@@ -170,8 +171,110 @@ namespace TrackMvvm.ViewModel
             }
         }
 
+        /// <summary>
+        /// Checks if another device has started tracking after our last heartbeat
+        /// Returns true if conflict detected (another device took over)
+        /// </summary>
+        private async System.Threading.Tasks.Task<bool> CheckForActiveTrackingConflictAsync()
+        {
+            // Check if we're currently tracking a task
+            var isTracking = WorkSession?.Tasks?.Any(t => t.IsActive) == true;
+            if (_syncService == null || !isTracking)
+                return false; // No conflict if we're not tracking
+
+            try
+            {
+                var tracking = await _syncService.GetActiveTrackingAsync();
+
+                if (tracking == null)
+                    return false; // No active tracking in database
+
+                var (deviceId, taskName, updatedAt) = tracking.Value;
+
+                // Get our device ID
+                var ourDeviceId = Environment.MachineName;
+
+                // Check if another device has updated the tracking after our last heartbeat
+                if (deviceId != ourDeviceId && updatedAt.HasValue && _lastHeartbeatSent.HasValue)
+                {
+                    if (updatedAt.Value > _lastHeartbeatSent.Value)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Conflict] Another device '{deviceId}' started task '{taskName}' at {updatedAt.Value:HH:mm:ss}");
+                        System.Diagnostics.Debug.WriteLine($"[Conflict] Our last heartbeat was at {_lastHeartbeatSent.Value:HH:mm:ss}");
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Conflict] Failed to check active tracking: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Stops local task and shows notification when another device takes over
+        /// </summary>
+        private async System.Threading.Tasks.Task StopLocalTaskDueToConflictAsync()
+        {
+            try
+            {
+                var tracking = await _syncService?.GetActiveTrackingAsync();
+                if (tracking == null)
+                    return;
+
+                var (deviceId, taskName, _) = tracking.Value;
+
+                System.Diagnostics.Debug.WriteLine($"[Conflict] Stopping local task. Device '{deviceId}' is now tracking '{taskName}'");
+
+                // Stop local task (don't clear remote tracking - other device owns it now)
+                WeakReferenceMessenger.Default.Send(new TaskStartedMessage(""));
+                WorkSession.Stop();
+
+                // Show notification to user
+                System.Windows.MessageBox.Show(
+                    $"Your task was stopped because device '{deviceId}' started tracking '{taskName}'.",
+                    "Task Stopped by Another Device",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Conflict] Failed to stop local task: {ex.Message}");
+            }
+        }
+
         private async void saveSessionTimer_Tick(object sender, EventArgs e)
         {
+            // STEP 1: Check for conflicts FIRST (before sending heartbeat)
+            bool conflictDetected = await CheckForActiveTrackingConflictAsync();
+
+            if (conflictDetected)
+            {
+                // Another device took over - stop local task and show notification
+                await StopLocalTaskDueToConflictAsync();
+                return; // Don't send heartbeat or save if we were stopped by another device
+            }
+
+            // STEP 2: Send heartbeat if we're currently tracking (only if no conflict)
+            var isTracking = WorkSession?.Tasks?.Any(t => t.IsActive) == true;
+            if (isTracking && _syncService != null)
+            {
+                try
+                {
+                    await _syncService.UpdateHeartbeatAsync();
+                    _lastHeartbeatSent = DateTime.UtcNow;
+                    System.Diagnostics.Debug.WriteLine("[Timer] Heartbeat sent");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Timer] Failed to send heartbeat: {ex.Message}");
+                }
+            }
+
+            // STEP 3: Save and sync (every 30s)
             _dataService.SaveWorkSession(WorkSession);
             await SyncWithMergeAsync("Timer");
         }
@@ -186,6 +289,8 @@ namespace TrackMvvm.ViewModel
                 try
                 {
                     await _syncService.StartTaskAsync(taskName);
+                    _lastHeartbeatSent = DateTime.UtcNow; // Track when we claimed the task
+                    System.Diagnostics.Debug.WriteLine($"[Task Start] Started tracking '{taskName}', heartbeat timestamp set");
                 }
                 catch (Exception ex)
                 {

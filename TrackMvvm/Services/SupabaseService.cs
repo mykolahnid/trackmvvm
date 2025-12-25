@@ -441,6 +441,31 @@ namespace TrackMvvm.Services
             }
         }
 
+        public async Task<(string DeviceId, string? TaskName, DateTime? UpdatedAt)?> GetActiveTrackingAsync()
+        {
+            if (!IsAuthenticated || UserId == null)
+                return null;
+
+            try
+            {
+                await EnsureInitializedAsync();
+
+                var current = await _client
+                    .From<Models.ActiveTrackingDb>()
+                    .Where(x => x.UserId == UserId)
+                    .Single();
+
+                if (current == null)
+                    return null;
+
+                return (current.DeviceId, current.TaskName, current.UpdatedAt);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         public void SubscribeToActiveTracking(Action<string, string?> onChanged)
         {
             // Realtime will be implemented in Phase 4

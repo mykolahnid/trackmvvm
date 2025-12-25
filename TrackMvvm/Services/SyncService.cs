@@ -59,6 +59,22 @@ public class SyncService : ISyncService
         return await _supabaseService.StopTaskTrackingAsync();
     }
 
+    public async Task<(string DeviceId, string? TaskName, DateTime? UpdatedAt)?> GetActiveTrackingAsync()
+    {
+        if (!_supabaseService.IsAuthenticated)
+            return null;
+
+        return await _supabaseService.GetActiveTrackingAsync();
+    }
+
+    public async Task<bool> UpdateHeartbeatAsync()
+    {
+        if (!_supabaseService.IsAuthenticated)
+            return false;
+
+        return await _supabaseService.UpdateHeartbeatAsync();
+    }
+
     /// <summary>
     /// Merge remote session with local session (latest duration wins per task)
     /// </summary>

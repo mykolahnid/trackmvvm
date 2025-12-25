@@ -26,6 +26,17 @@ public interface ISyncService
     Task<bool> StopTaskAsync();
 
     /// <summary>
+    /// Get current active tracking state
+    /// Returns tuple: (deviceId, taskName, updatedAt)
+    /// </summary>
+    Task<(string DeviceId, string? TaskName, System.DateTime? UpdatedAt)?> GetActiveTrackingAsync();
+
+    /// <summary>
+    /// Update heartbeat timestamp (called every 30s while tracking)
+    /// </summary>
+    Task<bool> UpdateHeartbeatAsync();
+
+    /// <summary>
     /// Get device identifier
     /// </summary>
     string DeviceId { get; }

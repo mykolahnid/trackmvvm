@@ -55,6 +55,12 @@ public interface ISupabaseService
     Task<bool> UpdateHeartbeatAsync();
 
     /// <summary>
+    /// Get current active tracking state
+    /// Returns tuple: (deviceId, taskName, updatedAt)
+    /// </summary>
+    Task<(string DeviceId, string? TaskName, DateTime? UpdatedAt)?> GetActiveTrackingAsync();
+
+    /// <summary>
     /// Subscribe to active tracking changes (Realtime)
     /// Callback parameters: deviceId (string), taskName (string?)
     /// </summary>
