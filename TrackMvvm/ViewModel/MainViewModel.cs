@@ -197,10 +197,11 @@ namespace TrackMvvm.ViewModel
                 // Check if another device has updated the tracking after our last heartbeat
                 if (deviceId != ourDeviceId && updatedAt.HasValue && _lastHeartbeatSent.HasValue)
                 {
-                    // Ensure we're comparing UTC times (database timestamp might have wrong Kind)
-                    var updatedAtUtc = updatedAt.Value.Kind == DateTimeKind.Utc
-                        ? updatedAt.Value
-                        : DateTime.SpecifyKind(updatedAt.Value, DateTimeKind.Utc);
+                    // Database returns UTC timestamps but with Unspecified Kind
+                    // We need to treat them as UTC for correct time comparisons
+                    var updatedAtUtc = new DateTime(
+                        updatedAt.Value.Ticks,
+                        DateTimeKind.Utc);
 
                     if (updatedAtUtc > _lastHeartbeatSent.Value)
                     {
@@ -312,10 +313,11 @@ namespace TrackMvvm.ViewModel
                             prevTaskName == taskName &&
                             prevUpdatedAt.HasValue)
                         {
-                            // Ensure we're comparing UTC times (database timestamp might have wrong Kind)
-                            var prevUpdatedAtUtc = prevUpdatedAt.Value.Kind == DateTimeKind.Utc
-                                ? prevUpdatedAt.Value
-                                : DateTime.SpecifyKind(prevUpdatedAt.Value, DateTimeKind.Utc);
+                            // Database returns UTC timestamps but with Unspecified Kind
+                            // We need to treat them as UTC for correct time calculations
+                            var prevUpdatedAtUtc = new DateTime(
+                                prevUpdatedAt.Value.Ticks,
+                                DateTimeKind.Utc);
                             var timeSinceLastUpdate = DateTime.UtcNow - prevUpdatedAtUtc;
 
                             if (timeSinceLastUpdate.TotalSeconds < 30)
