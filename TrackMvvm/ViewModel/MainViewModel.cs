@@ -197,7 +197,12 @@ namespace TrackMvvm.ViewModel
                 // Check if another device has updated the tracking after our last heartbeat
                 if (deviceId != ourDeviceId && updatedAt.HasValue && _lastHeartbeatSent.HasValue)
                 {
-                    if (updatedAt.Value > _lastHeartbeatSent.Value)
+                    // Ensure we're comparing UTC times (database timestamp might have wrong Kind)
+                    var updatedAtUtc = updatedAt.Value.Kind == DateTimeKind.Utc
+                        ? updatedAt.Value
+                        : DateTime.SpecifyKind(updatedAt.Value, DateTimeKind.Utc);
+
+                    if (updatedAtUtc > _lastHeartbeatSent.Value)
                     {
                         System.Diagnostics.Debug.WriteLine($"[Conflict] Another device '{deviceId}' started task '{taskName}' at {updatedAt.Value:HH:mm:ss}");
                         System.Diagnostics.Debug.WriteLine($"[Conflict] Our last heartbeat was at {_lastHeartbeatSent.Value:HH:mm:ss}");
@@ -307,7 +312,11 @@ namespace TrackMvvm.ViewModel
                             prevTaskName == taskName &&
                             prevUpdatedAt.HasValue)
                         {
-                            var timeSinceLastUpdate = DateTime.UtcNow - prevUpdatedAt.Value;
+                            // Ensure we're comparing UTC times (database timestamp might have wrong Kind)
+                            var prevUpdatedAtUtc = prevUpdatedAt.Value.Kind == DateTimeKind.Utc
+                                ? prevUpdatedAt.Value
+                                : DateTime.SpecifyKind(prevUpdatedAt.Value, DateTimeKind.Utc);
+                            var timeSinceLastUpdate = DateTime.UtcNow - prevUpdatedAtUtc;
 
                             if (timeSinceLastUpdate.TotalSeconds < 30)
                             {
