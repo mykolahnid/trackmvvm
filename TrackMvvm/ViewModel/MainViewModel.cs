@@ -129,22 +129,51 @@ namespace TrackMvvm.ViewModel
             }
         }
 
+        /// <summary>
+        /// Performs a full sync cycle: pull remote data, merge with Math.Max, push back
+        /// </summary>
+        private async System.Threading.Tasks.Task SyncWithMergeAsync(string context = "sync")
+        {
+            if (_syncService == null || WorkSession == null)
+                return;
+
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[{context}] Starting sync with merge...");
+
+                // Pull remote data first
+                var remoteSession = await _syncService.PullSessionAsync();
+                if (remoteSession != null)
+                {
+                    // Merge with Math.Max strategy
+                    var merged = Services.SyncService.MergeSessions(WorkSession, remoteSession);
+
+                    // Update local tasks with merged durations
+                    foreach (var mergedTask in merged.Tasks)
+                    {
+                        var existingTask = WorkSession.Tasks.FirstOrDefault(t => t.Name == mergedTask.Name);
+                        if (existingTask != null && existingTask.Duration != mergedTask.Duration)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[{context}] Task '{mergedTask.Name}': {existingTask.Duration}s -> {mergedTask.Duration}s");
+                            existingTask.Duration = mergedTask.Duration;
+                        }
+                    }
+                }
+
+                // Now push merged data
+                await _syncService.PushSessionAsync(WorkSession);
+                System.Diagnostics.Debug.WriteLine($"[{context}] Sync with merge completed");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[{context}] Failed to sync with merge: {ex.Message}");
+            }
+        }
+
         private async void saveSessionTimer_Tick(object sender, EventArgs e)
         {
             _dataService.SaveWorkSession(WorkSession);
-
-            // Push to Supabase if sync is available
-            if (_syncService != null)
-            {
-                try
-                {
-                    await _syncService.PushSessionAsync(WorkSession);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Failed to push session: {ex.Message}");
-                }
-            }
+            await SyncWithMergeAsync("Timer");
         }
 
         private async void WorkSession_TaskStarted(string taskName)
@@ -175,23 +204,22 @@ namespace TrackMvvm.ViewModel
             System.Diagnostics.Debug.WriteLine("[MainViewModel] OnClosingAsync called");
             _dataService.SaveWorkSession(WorkSession);
 
-            // Push to Supabase if sync is available
+            // Sync with merge and clear active tracking
             if (_syncService != null)
             {
                 try
                 {
-                    System.Diagnostics.Debug.WriteLine("[MainViewModel] Pushing session to Supabase on close...");
-                    await _syncService.PushSessionAsync(WorkSession);
-                    System.Diagnostics.Debug.WriteLine("[MainViewModel] Successfully pushed session on close");
+                    // Sync with Math.Max merge
+                    await SyncWithMergeAsync("Close");
 
                     // Clear active tracking when app closes (user is no longer tracking anything)
-                    System.Diagnostics.Debug.WriteLine("[MainViewModel] Clearing active tracking on close...");
+                    System.Diagnostics.Debug.WriteLine("[Close] Clearing active tracking...");
                     await _syncService.StopTaskAsync();
-                    System.Diagnostics.Debug.WriteLine("[MainViewModel] Successfully cleared active tracking on close");
+                    System.Diagnostics.Debug.WriteLine("[Close] Successfully cleared active tracking");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Failed to sync on close: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[Close] Failed to sync: {ex.Message}");
                 }
             }
         }
