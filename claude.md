@@ -12,7 +12,7 @@
 - Public GitHub repo with gitignored API keys
 - Local XML files remain primary storage, Supabase is for sync only
 
-## Current Status: Phase 2 Complete ✅
+## Current Status: Phase 3 Complete ✅
 
 ### Phase 1: Foundation ✅ (Completed)
 - ✅ Supabase client integration (supabase-csharp 0.16.2)
@@ -27,18 +27,19 @@
 ### Phase 2: Basic Sync ✅ (Completed)
 - ✅ ISyncService and SyncService for orchestrating sync
 - ✅ Pull on startup: Fetches remote session and merges with local
-- ✅ Push on save: Every minute (timer) and on app close
+- ✅ Push on save: Every 30s (timer) and on app close
 - ✅ Last-writer-wins on task start: Updates active_tracking table
 - ✅ Stop tracking: Clears active_tracking when task stopped
 - ✅ Session merging: Uses Math.Max for duration conflicts
 
-### Phase 3: Active Task Lock 🔄 (Next)
+### Phase 3: Active Task Lock ✅ (Completed)
 **Goal**: Enforce last-writer-wins in real-time
-- ⏳ Add periodic heartbeat (every 30s) to update active_tracking.updated_at
-- ⏳ Add periodic pull (every 60s) to check for active task changes
-- ⏳ Detect if another device started a task and auto-stop local task
-- ⏳ Show notification when task is stopped by another device
-- ⏳ Handle stale locks (no heartbeat for 5+ minutes)
+- ✅ Add periodic heartbeat (every 30s) to update active_tracking.updated_at
+- ✅ Add conflict detection to check if another device took over
+- ✅ Detect if another device started a task and auto-stop local task
+- ✅ Show notification when task is stopped by another device
+- ✅ In-flight time capture when overtaking tasks (prevents losing 0-30s of work)
+- ✅ Timezone-aware timestamp comparisons (ToUniversalTime for cross-timezone support)
 
 ### Phase 4: Realtime + Polish 🔄 (Future)
 **Goal**: Instant updates and offline support
@@ -91,11 +92,16 @@
 
 **Core Logic** (MOST IMPORTANT):
 - `TrackMvvm/ViewModel/MainViewModel.cs` - **Integrated sync at all key points**:
-  - Line 52-67: Pull and merge on startup
-  - Line 81-97: Push on save (timer tick)
-  - Line 99-115: Last-writer-wins on task start
-  - Line 122-138: Push on close
-  - Line 153-170: Stop tracking on task stop
+  - Line 30: _lastHeartbeatSent timestamp tracking
+  - Line 74: Timer interval changed to 30s (from 60s)
+  - Line 82-119: Pull and merge on startup (after authentication)
+  - Line 136-172: SyncWithMergeAsync (pull → merge → push pattern)
+  - Line 177-220: CheckForActiveTrackingConflictAsync (conflict detection)
+  - Line 225-252: StopLocalTaskDueToConflictAsync (handles takeover notification)
+  - Line 254-285: Timer tick (conflict check → heartbeat → save/sync)
+  - Line 287-358: WorkSession_TaskStarted (claim task + in-flight time capture)
+  - Line 366-389: OnClosingAsync (sync + clear tracking on app close)
+  - Line 404-421: OnStop (clear tracking when user stops task)
 
 ## Database Schema
 
@@ -155,38 +161,79 @@ CREATE TABLE active_tracking (
 
 ## Sync Flow
 
-### On Startup (MainViewModel.cs:52-67)
+### On Startup (MainViewModel.cs:82-119)
 ```csharp
 // 1. Load local WorkSession from XML
-// 2. Pull remote session from Supabase
+// 2. Wait for authentication to complete (AuthenticationCompletedMessage)
+// 3. Pull remote session from Supabase
 var remoteSession = await _syncService.PullSessionAsync();
-// 3. Merge using Math.Max for durations
-WorkSession = SyncService.MergeSessions(WorkSession, remoteSession);
-// 4. Update UI with merged tasks
+// 4. Merge using Math.Max for durations
+var merged = SyncService.MergeSessions(WorkSession, remoteSession);
+// 5. Update existing tasks with merged durations
+// 6. Add new tasks from remote
 ```
 
-### On Save (Every 60s + On Close)
+### Every 30 Seconds (Timer Tick - MainViewModel.cs:254-285)
 ```csharp
-// 1. Save to local XML
+// STEP 1: Check for conflicts FIRST (before sending heartbeat)
+bool conflictDetected = await CheckForActiveTrackingConflictAsync();
+if (conflictDetected) {
+    // Another device took over - stop local task and show notification
+    await StopLocalTaskDueToConflictAsync();
+    return;
+}
+
+// STEP 2: Send heartbeat if we're currently tracking (only if no conflict)
+if (isTracking) {
+    await _syncService.UpdateHeartbeatAsync();
+    _lastHeartbeatSent = DateTime.UtcNow;
+}
+
+// STEP 3: Save and sync (pull → merge → push)
 _dataService.SaveWorkSession(WorkSession);
-// 2. Push to Supabase
-await _syncService.PushSessionAsync(WorkSession);
+await SyncWithMergeAsync("Timer");
 ```
 
-### On Task Start (Last-Writer-Wins)
+### On Task Start (MainViewModel.cs:287-358)
 ```csharp
 // 1. Send UI message
 WeakReferenceMessenger.Default.Send(new TaskStartedMessage(taskName));
-// 2. Update active_tracking in Supabase (upsert)
+
+// 2. Check if we're overtaking another device's active task
+var previousTracking = await _syncService.GetActiveTrackingAsync();
+
+// 3. Claim the task (overwrites previous device - last-writer-wins)
 await _syncService.StartTaskAsync(taskName);
-// Device ID and timestamp recorded for last-writer-wins
+_lastHeartbeatSent = DateTime.UtcNow;
+
+// 4. If we overtook another device with a fresh timestamp (<30s), capture in-flight time
+if (previousTracking.HasValue && prevUpdatedAt < 30s ago) {
+    // Pull latest remote session
+    var remoteSession = await _syncService.PullSessionAsync();
+    // Estimate in-flight time: remote_duration + time_since_last_update
+    var estimatedRemoteDuration = remoteTask.Duration + timeSinceLastUpdate.TotalSeconds;
+    // Use max(local, estimated_remote) as starting duration
+    localTask.Duration = Math.Max(localDuration, estimatedRemoteDuration);
+}
 ```
 
-### On Task Stop
+### On Task Stop (MainViewModel.cs:404-421)
 ```csharp
-// 1. Stop local task
+// 1. Send UI message
+WeakReferenceMessenger.Default.Send(new TaskStartedMessage(""));
+// 2. Stop local task
 WorkSession.Stop();
-// 2. Clear active_tracking in Supabase
+// 3. Clear active_tracking in Supabase
+await _syncService.StopTaskAsync();
+```
+
+### On App Close (MainViewModel.cs:366-389)
+```csharp
+// 1. Save to local XML
+_dataService.SaveWorkSession(WorkSession);
+// 2. Sync with Math.Max merge (pull → merge → push)
+await SyncWithMergeAsync("Close");
+// 3. Clear active tracking (user is no longer tracking anything)
 await _syncService.StopTaskAsync();
 ```
 
@@ -200,24 +247,33 @@ await _syncService.StopTaskAsync();
 5. Fill in your Supabase URL and anon key
 6. Build and run the app
 
-### Testing Sync Between Two "Devices"
+### Testing Phase 3: Active Task Lock
 
-**Method 1: Two Physical PCs**
-1. Copy appsettings.local.json to both PCs
-2. Sign in with same Supabase credentials on both
-3. Start task on PC1 → Wait 60s → Check it appears on PC2 after restart
-4. Start different task on PC2 → Check active_tracking table updated
+**Test Scenario 1: Conflict Detection**
+1. PC1: Start tracking "Task A"
+2. PC2: Start tracking "Task B" (or same task)
+3. PC1: Within 30 seconds, should see MessageBox notification that PC2 took over
+4. PC1: Local task should be automatically stopped
+5. Verify: Only PC2's task is in active_tracking table
 
-**Method 2: Two App Instances (Same PC)**
-- Run two instances of the app (if allowed by app design)
-- Use different device IDs if needed for testing
+**Test Scenario 2: In-Flight Time Capture**
+1. PC1: Start tracking "Task A", let it run for 60 seconds
+2. PC2: Start tracking "Task A" (within 30s of PC1's last heartbeat)
+3. PC2: Should capture PC1's in-flight time
+4. PC2: Task should start from ~60 seconds + time_since_last_update
+5. Verify: No time lost from PC1's tracking
 
-**Method 3: Manual Database Testing**
-1. Run app on PC1, start task "Task A"
-2. Check Supabase dashboard → active_tracking table
-3. Verify user_id, device_id, task_name, started_at populated
-4. Manually insert record for different device_id
-5. Restart app → Should see merged data
+**Test Scenario 3: Heartbeat and Sync**
+1. PC1: Start tracking a task
+2. Watch Debug output for "[Timer] Heartbeat sent" every 30 seconds
+3. Check Supabase active_tracking table - updated_at should refresh every 30s
+4. Verify: Task durations sync correctly via Math.Max merge
+
+**Test Scenario 4: Cross-Timezone**
+1. PC1: Set timezone to UTC+2
+2. PC2: Set timezone to UTC+3
+3. Run conflict detection test
+4. Verify: No negative time differences, conflicts detected correctly
 
 ## Known Issues & Considerations
 
@@ -228,18 +284,16 @@ await _syncService.StopTaskAsync();
 4. ✅ Config file not copying: Added CopyToOutputDirectory in csproj
 5. ✅ Guid.Empty IDs: Fixed by using fetch-then-insert-or-update pattern
 6. ✅ Authentication timing: Added AuthenticationCompletedMessage to trigger sync after auth
+7. ✅ SessionDate timezone: Fixed to use DateOnly.FromDateTime(DateTime.Today) instead of session.Today
+8. ✅ Duplicate key violations: Added try-catch with fetch-on-failure for race conditions
+9. ✅ Cross-timezone sync: Fixed timestamp comparisons using ToUniversalTime()
+10. ✅ Negative time differences: Supabase returns timestamps in local time, convert to UTC for comparisons
 
-### Current Limitations (Phase 2)
-- ⚠️ **Not real-time yet**: Changes only sync on app restart or timer tick
-- ⚠️ **No heartbeat**: Can't detect if another device's task is still active
-- ⚠️ **No stale lock handling**: If app crashes, active_tracking not cleared
+### Current Limitations (Phase 3)
+- ⚠️ **Not real-time yet**: Changes sync every 30s, not instant
+- ⚠️ **No stale lock handling**: If app crashes, active_tracking not cleared (requires manual cleanup or timeout)
 - ⚠️ **No offline queue**: Failed syncs are just logged to Debug
-
-### What Phase 3 Will Fix
-- Add heartbeat timer (30s) to keep active_tracking fresh
-- Add pull timer (60s) to detect remote changes
-- Auto-stop local task if remote device started newer task
-- Clean up stale locks (no heartbeat for 5+ minutes)
+- ⚠️ **MessageBox notification**: Blocking dialog, could be improved with toast notification
 
 ### What Phase 4 Will Add
 - Realtime subscriptions for instant updates (no polling)
@@ -309,18 +363,25 @@ public static WorkSession MergeSessions(WorkSession local, WorkSession remote)
 
 ## Next Session Tasks
 
-### Immediate Next Steps (Phase 3):
-1. Add heartbeat timer to MainViewModel (30s interval)
-2. Add pull timer to MainViewModel (60s interval)
-3. Implement auto-stop logic when remote device takes over
-4. Add UI notification for task stopped by remote device
-5. Implement stale lock cleanup in SupabaseService
-6. Test two-device scenario thoroughly
+### Immediate Next Steps:
+1. **Test Phase 3 with two physical devices** (PRIORITY)
+   - Test conflict detection and auto-stop
+   - Test in-flight time capture
+   - Test cross-timezone scenarios
+   - Verify heartbeat mechanism works correctly
 
-### Questions to Ask User:
-- Do you want to test Phase 2 first before proceeding to Phase 3?
-- What kind of notification do you want when remote device stops your task? (MessageBox, toast, status bar?)
-- Do you want a visual indicator showing which device is currently tracking?
+2. **Phase 4: Realtime + Polish** (Future)
+   - Implement Supabase Realtime subscriptions for instant updates
+   - Add offline queue for failed sync operations
+   - Add sync status indicator in UI
+   - Replace MessageBox with toast notification
+   - Implement stale lock cleanup (timeout after 5 minutes of no heartbeat)
+
+### Questions to Consider:
+- Do you want to add a sync status indicator showing connection state?
+- Should we implement stale lock cleanup before Phase 4?
+- Do you want toast notifications instead of MessageBox?
+- Should we add a visual indicator showing which device is currently tracking?
 
 ## Useful Commands
 
@@ -349,6 +410,11 @@ git status
 
 ---
 
-**Last Updated**: 2025-11-24
-**Phase**: 2 Complete, Phase 3 Next
-**Status**: Ready for testing or Phase 3 implementation
+**Last Updated**: 2025-12-25
+**Phase**: 3 Complete, Phase 4 Next
+**Status**: Ready for Phase 3 testing with two devices
+
+**Recent Commits**:
+- `413f99f`: Fix timezone handling in conflict detection and in-flight capture
+- `d308b6e`: Fix SessionDate timezone issue by using DateOnly type
+- `869e73c`: Handle duplicate key constraint violations in SyncSessionAsync
