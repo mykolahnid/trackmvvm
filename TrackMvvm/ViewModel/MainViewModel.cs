@@ -101,12 +101,10 @@ namespace TrackMvvm.ViewModel
                         else
                         {
                             // Add new task from remote
+                            // Note: WorkSession.AddTask fires TaskAdded event which updates TasksCollection
                             WorkSession.AddTask(mergedTask.Name);
                             var newTask = WorkSession.Tasks.First(t => t.Name == mergedTask.Name);
                             newTask.Duration = mergedTask.Duration;
-
-                            var taskTimeViewModel = new TaskTimeViewModel(newTask);
-                            TasksCollection.Add(taskTimeViewModel);
                         }
                     }
 
