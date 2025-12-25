@@ -2,10 +2,25 @@
 -- Run these in Supabase Dashboard → SQL Editor to verify sync behavior
 
 -- ============================================
+-- IMPORTANT: Getting Your User ID
+-- ============================================
+-- auth.uid() returns NULL in SQL Editor because you're not authenticated
+-- First, get your actual user_id by running this query:
+
+SELECT id as user_id, email, created_at
+FROM auth.users
+ORDER BY created_at DESC
+LIMIT 5;
+
+-- Copy your user_id (UUID) from the results above
+-- Then replace 'YOUR-USER-ID-HERE' in all queries below with your actual UUID
+-- Example: '550e8400-e29b-41d4-a716-446655440000'
+
+-- ============================================
 -- 1. VIEW ALL YOUR DATA
 -- ============================================
 
--- Show all work sessions for current user
+-- Show all work sessions for your user
 SELECT
     id,
     session_date,
@@ -13,7 +28,7 @@ SELECT
     updated_at,
     (updated_at - created_at) as time_since_creation
 FROM work_sessions
-WHERE user_id = auth.uid()
+WHERE user_id = 'YOUR-USER-ID-HERE'
 ORDER BY session_date DESC;
 
 -- Show all tasks for today's session
@@ -25,7 +40,7 @@ SELECT
     tt.updated_at
 FROM task_times tt
 JOIN work_sessions ws ON ws.id = tt.session_id
-WHERE ws.user_id = auth.uid()
+WHERE ws.user_id = 'YOUR-USER-ID-HERE'
   AND ws.session_date = CURRENT_DATE
 ORDER BY tt.task_name;
 
@@ -37,7 +52,42 @@ SELECT
     updated_at,
     (now() - updated_at) as time_since_last_update
 FROM active_tracking
-WHERE user_id = auth.uid();
+WHERE user_id = 'YOUR-USER-ID-HERE';
+
+-- ============================================
+-- ALTERNATIVE: View ALL data (works without user_id)
+-- ============================================
+-- Use these if you have only one user in the system
+
+-- Show all sessions (all users)
+SELECT
+    user_id,
+    session_date,
+    created_at,
+    updated_at
+FROM work_sessions
+ORDER BY session_date DESC;
+
+-- Show all tasks today (all users)
+SELECT
+    ws.user_id,
+    ws.session_date,
+    tt.task_name,
+    tt.duration_seconds,
+    (tt.duration_seconds / 60.0) as duration_minutes
+FROM task_times tt
+JOIN work_sessions ws ON ws.id = tt.session_id
+WHERE ws.session_date = CURRENT_DATE
+ORDER BY tt.task_name;
+
+-- Show all active tracking (all users)
+SELECT
+    user_id,
+    device_id,
+    task_name,
+    started_at,
+    updated_at
+FROM active_tracking;
 
 -- ============================================
 -- 2. VERIFY SYNC OPERATIONS
@@ -50,7 +100,7 @@ SELECT
         ELSE 'No session found for today ✗'
     END as status
 FROM work_sessions
-WHERE user_id = auth.uid()
+WHERE user_id = 'YOUR-USER-ID-HERE'
   AND session_date = CURRENT_DATE;
 
 -- Count tasks in today's session
@@ -60,7 +110,7 @@ SELECT
     SUM(duration_seconds) / 60.0 as total_minutes
 FROM task_times tt
 JOIN work_sessions ws ON ws.id = tt.session_id
-WHERE ws.user_id = auth.uid()
+WHERE ws.user_id = 'YOUR-USER-ID-HERE'
   AND ws.session_date = CURRENT_DATE;
 
 -- Check if active tracking is set
@@ -72,17 +122,17 @@ SELECT
     started_at,
     updated_at
 FROM active_tracking
-WHERE user_id = auth.uid();
+WHERE user_id = 'YOUR-USER-ID-HERE';
 
 -- ============================================
 -- 3. MANUAL DATA INSERTION (for testing)
 -- ============================================
 
 -- Insert a test session for today (if doesn't exist)
--- Replace {your-device-name} with actual device name
+-- FIRST: Replace YOUR-USER-ID-HERE with your actual user_id
 INSERT INTO work_sessions (user_id, session_date, created_at, updated_at)
 VALUES (
-    auth.uid(),
+    'YOUR-USER-ID-HERE',
     CURRENT_DATE,
     now(),
     now()
@@ -93,7 +143,7 @@ ON CONFLICT (user_id, session_date) DO NOTHING;
 -- This simulates data from another device
 WITH session AS (
     SELECT id FROM work_sessions
-    WHERE user_id = auth.uid() AND session_date = CURRENT_DATE
+    WHERE user_id = 'YOUR-USER-ID-HERE' AND session_date = CURRENT_DATE
 )
 INSERT INTO task_times (session_id, task_name, duration_seconds, updated_at)
 SELECT
@@ -111,7 +161,7 @@ DO UPDATE SET
 -- Replace 'OTHER-PC' with a fake device name
 INSERT INTO active_tracking (user_id, device_id, task_name, started_at, updated_at)
 VALUES (
-    auth.uid(),
+    'YOUR-USER-ID-HERE',
     'OTHER-PC',
     'Task from other device',
     now(),
@@ -135,13 +185,13 @@ SET
     task_name = NULL,
     started_at = NULL,
     updated_at = now()
-WHERE user_id = auth.uid();
+WHERE user_id = 'YOUR-USER-ID-HERE';
 
 -- Delete a specific task from today
 DELETE FROM task_times
 WHERE session_id IN (
     SELECT id FROM work_sessions
-    WHERE user_id = auth.uid() AND session_date = CURRENT_DATE
+    WHERE user_id = 'YOUR-USER-ID-HERE' AND session_date = CURRENT_DATE
 )
 AND task_name = 'Remote Test Task';
 
@@ -149,12 +199,12 @@ AND task_name = 'Remote Test Task';
 DELETE FROM task_times
 WHERE session_id IN (
     SELECT id FROM work_sessions
-    WHERE user_id = auth.uid() AND session_date = CURRENT_DATE
+    WHERE user_id = 'YOUR-USER-ID-HERE' AND session_date = CURRENT_DATE
 );
 
 -- Delete today's session entirely (cascades to tasks)
 DELETE FROM work_sessions
-WHERE user_id = auth.uid()
+WHERE user_id = 'YOUR-USER-ID-HERE'
   AND session_date = CURRENT_DATE;
 
 -- ============================================
@@ -169,7 +219,7 @@ SELECT
     ws.updated_at as last_sync
 FROM work_sessions ws
 LEFT JOIN task_times tt ON tt.session_id = ws.id
-WHERE ws.user_id = auth.uid()
+WHERE ws.user_id = 'YOUR-USER-ID-HERE'
 GROUP BY ws.id, ws.session_date, ws.updated_at
 ORDER BY ws.session_date DESC
 LIMIT 10;
@@ -181,7 +231,7 @@ SELECT
     COUNT(*) as duplicate_count
 FROM task_times tt
 JOIN work_sessions ws ON ws.id = tt.session_id
-WHERE ws.user_id = auth.uid()
+WHERE ws.user_id = 'YOUR-USER-ID-HERE'
 GROUP BY ws.session_date, tt.task_name
 HAVING COUNT(*) > 1;
 
@@ -193,7 +243,7 @@ SELECT
     updated_at,
     EXTRACT(EPOCH FROM (now() - updated_at)) / 60 as minutes_stale
 FROM active_tracking
-WHERE user_id = auth.uid()
+WHERE user_id = 'YOUR-USER-ID-HERE'
   AND task_name IS NOT NULL
   AND (now() - updated_at) > INTERVAL '5 minutes';
 
@@ -205,7 +255,7 @@ SELECT
     tt.updated_at
 FROM task_times tt
 JOIN work_sessions ws ON ws.id = tt.session_id
-WHERE ws.user_id = auth.uid()
+WHERE ws.user_id = 'YOUR-USER-ID-HERE'
   AND ws.session_date > CURRENT_DATE - INTERVAL '7 days'
 ORDER BY ws.session_date DESC, tt.task_name;
 
@@ -217,7 +267,7 @@ ORDER BY ws.session_date DESC, tt.task_name;
 -- Expected: App should use Math.Max = 200s
 WITH session AS (
     SELECT id FROM work_sessions
-    WHERE user_id = auth.uid() AND session_date = CURRENT_DATE
+    WHERE user_id = 'YOUR-USER-ID-HERE' AND session_date = CURRENT_DATE
 )
 INSERT INTO task_times (session_id, task_name, duration_seconds, updated_at)
 SELECT id, 'MergeTest', 200, now()
@@ -236,7 +286,7 @@ SELECT
     EXTRACT(EPOCH FROM (now() - updated_at)) as seconds_ago
 FROM task_times tt
 JOIN work_sessions ws ON ws.id = tt.session_id
-WHERE ws.user_id = auth.uid()
+WHERE ws.user_id = 'YOUR-USER-ID-HERE'
   AND ws.session_date = CURRENT_DATE
 ORDER BY updated_at DESC;
 -- updated_at should be within last few seconds
@@ -251,7 +301,7 @@ SELECT
     COUNT(*)::text as count,
     MAX(session_date)::text as latest
 FROM work_sessions
-WHERE user_id = auth.uid()
+WHERE user_id = 'YOUR-USER-ID-HERE'
 
 UNION ALL
 
@@ -261,7 +311,7 @@ SELECT
     SUM(duration_seconds / 60)::text || ' min' as latest
 FROM task_times tt
 JOIN work_sessions ws ON ws.id = tt.session_id
-WHERE ws.user_id = auth.uid() AND ws.session_date = CURRENT_DATE
+WHERE ws.user_id = 'YOUR-USER-ID-HERE' AND ws.session_date = CURRENT_DATE
 
 UNION ALL
 
@@ -270,4 +320,26 @@ SELECT
     COALESCE(task_name, 'None')::text as count,
     COALESCE(device_id, 'N/A')::text as latest
 FROM active_tracking
-WHERE user_id = auth.uid();
+WHERE user_id = 'YOUR-USER-ID-HERE';
+
+-- ============================================
+-- 8. HELPER: Create User ID Variable (Advanced)
+-- ============================================
+
+-- If you want to avoid copy/pasting your user_id everywhere,
+-- you can use a CTE (Common Table Expression) at the start of queries:
+
+WITH my_user AS (
+    SELECT id FROM auth.users WHERE email = 'your-email@example.com'
+)
+SELECT
+    ws.session_date,
+    tt.task_name,
+    tt.duration_seconds
+FROM task_times tt
+JOIN work_sessions ws ON ws.id = tt.session_id
+CROSS JOIN my_user
+WHERE ws.user_id = my_user.id
+  AND ws.session_date = CURRENT_DATE;
+
+-- Just replace 'your-email@example.com' with your actual email address

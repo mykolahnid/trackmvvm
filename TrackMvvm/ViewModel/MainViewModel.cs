@@ -185,10 +185,15 @@ namespace TrackMvvm.ViewModel
                     System.Diagnostics.Debug.WriteLine("[MainViewModel] Pushing session to Supabase on close...");
                     await _syncService.PushSessionAsync(WorkSession);
                     System.Diagnostics.Debug.WriteLine("[MainViewModel] Successfully pushed session on close");
+
+                    // Clear active tracking when app closes (user is no longer tracking anything)
+                    System.Diagnostics.Debug.WriteLine("[MainViewModel] Clearing active tracking on close...");
+                    await _syncService.StopTaskAsync();
+                    System.Diagnostics.Debug.WriteLine("[MainViewModel] Successfully cleared active tracking on close");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Failed to push session on close: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Failed to sync on close: {ex.Message}");
                 }
             }
         }
