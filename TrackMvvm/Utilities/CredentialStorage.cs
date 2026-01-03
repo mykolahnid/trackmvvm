@@ -1,4 +1,4 @@
-using CredentialManagement;
+using Meziantou.Framework.Win32;
 
 namespace TrackMvvm.Utilities;
 
@@ -16,15 +16,13 @@ public static class CredentialStorage
     {
         try
         {
-            using var cred = new Credential
-            {
-                Target = CredentialTarget,
-                Username = email,
-                Password = password,
-                Type = CredentialType.Generic,
-                PersistanceType = PersistanceType.LocalComputer
-            };
-            return cred.Save();
+            CredentialManager.WriteCredential(
+                applicationName: CredentialTarget,
+                userName: email,
+                secret: password,
+                comment: "TrackMvvm Supabase Credentials",
+                persistence: CredentialPersistence.LocalMachine);
+            return true;
         }
         catch
         {
@@ -40,10 +38,10 @@ public static class CredentialStorage
     {
         try
         {
-            using var cred = new Credential { Target = CredentialTarget };
-            if (cred.Load())
+            var credential = CredentialManager.ReadCredential(CredentialTarget);
+            if (credential != null)
             {
-                return (cred.Username, cred.Password);
+                return (credential.UserName, credential.Password);
             }
             return null;
         }
@@ -60,8 +58,8 @@ public static class CredentialStorage
     {
         try
         {
-            using var cred = new Credential { Target = CredentialTarget };
-            return cred.Delete();
+            CredentialManager.DeleteCredential(CredentialTarget);
+            return true;
         }
         catch
         {
@@ -76,8 +74,8 @@ public static class CredentialStorage
     {
         try
         {
-            using var cred = new Credential { Target = CredentialTarget };
-            return cred.Exists();
+            var credential = CredentialManager.ReadCredential(CredentialTarget);
+            return credential != null;
         }
         catch
         {
