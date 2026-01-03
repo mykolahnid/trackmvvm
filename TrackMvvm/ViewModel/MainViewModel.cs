@@ -141,100 +141,100 @@ namespace TrackMvvm.ViewModel
         }
 
         /// <summary>
-        /// Checks if another device has started tracking after our last heartbeat
-        /// Returns true if conflict detected (another device took over)
+        /// Checks active_tracking and updates UI based on remote device status
+        /// Returns true if we had a conflict (another device took over our active task)
         /// </summary>
-        private async System.Threading.Tasks.Task<bool> CheckForActiveTrackingConflictAsync()
+        private async System.Threading.Tasks.Task<bool> CheckAndUpdateActiveTrackingAsync()
         {
-            // Check if we're currently tracking a task
-            var isTracking = WorkSession?.Tasks?.Any(t => t.IsActive) == true;
-            if (_syncService == null || !isTracking)
-                return false; // No conflict if we're not tracking
+            if (_syncService == null)
+                return false;
 
             try
             {
                 var tracking = await _syncService.GetActiveTrackingAsync();
+                var ourDeviceId = Environment.MachineName;
+                var isTracking = WorkSession?.Tasks?.Any(t => t.IsActive) == true;
 
                 if (tracking == null)
-                    return false; // No active tracking in database
+                {
+                    // No one is tracking - clear all orange indicators
+                    foreach (var task in WorkSession.Tasks)
+                    {
+                        task.IsRemoteTracking = false;
+                    }
+                    return false;
+                }
 
                 var (deviceId, taskName, updatedAt) = tracking.Value;
 
-                // Get our device ID
-                var ourDeviceId = Environment.MachineName;
-
-                // Check if another device has updated the tracking after our last heartbeat
-                if (deviceId != ourDeviceId && updatedAt.HasValue && _lastHeartbeatSent.HasValue)
+                if (deviceId == ourDeviceId)
                 {
-                    // Supabase client converts UTC timestamps to local time
-                    // Convert back to UTC for correct time comparisons
+                    // We are tracking - clear all orange indicators
+                    foreach (var task in WorkSession.Tasks)
+                    {
+                        task.IsRemoteTracking = false;
+                    }
+                    return false;
+                }
+
+                // Another device is tracking
+                // First, clear all orange indicators
+                foreach (var task in WorkSession.Tasks)
+                {
+                    task.IsRemoteTracking = false;
+                }
+
+                // Set orange for the task being tracked by the other device
+                var trackedTask = WorkSession.Tasks.FirstOrDefault(t => t.Name == taskName);
+                if (trackedTask != null)
+                {
+                    trackedTask.IsRemoteTracking = true;
+                }
+
+                // Check if this is a conflict (they took over our active task)
+                if (isTracking && updatedAt.HasValue && _lastHeartbeatSent.HasValue)
+                {
                     var updatedAtUtc = updatedAt.Value.Kind == DateTimeKind.Utc
                         ? updatedAt.Value
                         : updatedAt.Value.ToUniversalTime();
 
                     if (updatedAtUtc > _lastHeartbeatSent.Value)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[Conflict] Another device '{deviceId}' started task '{taskName}' at {updatedAt.Value:HH:mm:ss}");
+                        // Conflict detected - another device took over after our last heartbeat
+                        System.Diagnostics.Debug.WriteLine($"[Conflict] Device '{deviceId}' took over task '{taskName}' at {updatedAt.Value:HH:mm:ss}");
                         System.Diagnostics.Debug.WriteLine($"[Conflict] Our last heartbeat was at {_lastHeartbeatSent.Value:HH:mm:ss}");
-                        return true;
+
+                        // Stop our local task
+                        WeakReferenceMessenger.Default.Send(new TaskStartedMessage(""));
+                        WorkSession.Stop();
+
+                        // Show notification
+                        WeakReferenceMessenger.Default.Send(new ShowToastMessage(
+                            $"Task stopped: '{deviceId}' is now tracking '{taskName}'"));
+
+                        return true; // Conflict detected
                     }
                 }
 
+                // No conflict, but another device is tracking
                 return false;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[Conflict] Failed to check active tracking: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ActiveTracking] Failed to check: {ex.Message}");
                 return false;
-            }
-        }
-
-        /// <summary>
-        /// Stops local task and shows notification when another device takes over
-        /// </summary>
-        private async System.Threading.Tasks.Task StopLocalTaskDueToConflictAsync()
-        {
-            try
-            {
-                var tracking = await _syncService?.GetActiveTrackingAsync();
-                if (tracking == null)
-                    return;
-
-                var (deviceId, taskName, _) = tracking.Value;
-
-                System.Diagnostics.Debug.WriteLine($"[Conflict] Stopping local task. Device '{deviceId}' is now tracking '{taskName}'");
-
-                // Stop local task (don't clear remote tracking - other device owns it now)
-                WeakReferenceMessenger.Default.Send(new TaskStartedMessage(""));
-                WorkSession.Stop();
-
-                // Mark the task as being tracked remotely (orange indicator)
-                var task = WorkSession.Tasks.FirstOrDefault(t => t.Name == taskName);
-                if (task != null)
-                {
-                    task.IsRemoteTracking = true;
-                }
-
-                // Show non-intrusive toast notification to user
-                WeakReferenceMessenger.Default.Send(new ShowToastMessage(
-                    $"Task stopped: '{deviceId}' is now tracking '{taskName}'"));
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Conflict] Failed to stop local task: {ex.Message}");
             }
         }
 
         private async void saveSessionTimer_Tick(object sender, EventArgs e)
         {
-            // STEP 1: Check for conflicts FIRST (before sending heartbeat)
-            bool conflictDetected = await CheckForActiveTrackingConflictAsync();
+            // STEP 1: Check active_tracking and update orange indicators
+            bool conflictDetected = await CheckAndUpdateActiveTrackingAsync();
 
             if (conflictDetected)
             {
-                // Another device took over - stop local task and show notification
-                await StopLocalTaskDueToConflictAsync();
-                return; // Don't send heartbeat or save if we were stopped by another device
+                // Another device took over our active task - don't send heartbeat or save
+                return;
             }
 
             // STEP 2: Send heartbeat if we're currently tracking (only if no conflict)
@@ -315,9 +315,9 @@ namespace TrackMvvm.ViewModel
 
                                             System.Diagnostics.Debug.WriteLine($"[Task Start] In-flight capture: local={localDuration:F0}s, remote={remoteTask.Duration:F0}s + {timeSinceLastUpdate.TotalSeconds:F0}s = estimated={estimatedRemoteDuration:F0}s, using={capturedDuration:F0}s");
 
-                                            // Set the task to start from the higher value and mark as remote tracking
+                                            // Set the task to start from the captured duration
                                             localTask.Duration = capturedDuration;
-                                            localTask.IsRemoteTracking = true;
+                                            // Note: Orange indicator is now set via active_tracking check
                                         }
                                     }
                                 }

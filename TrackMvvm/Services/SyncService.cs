@@ -99,12 +99,7 @@ public class SyncService : ISyncService
                 {
                     // During sync: If remote > local, server has newer data
                     localTask.Duration = remoteTask.Duration;
-                    localTask.IsRemoteTracking = true;
-                }
-                else if (localTask.IsRemoteTracking)
-                {
-                    // Clear orange - server doesn't have newer data anymore
-                    localTask.IsRemoteTracking = false;
+                    // Note: Orange indicator is now set via active_tracking, not duration comparison
                 }
             }
         }
