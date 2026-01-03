@@ -378,6 +378,14 @@ namespace TrackMvvm.ViewModel
         private async void OnStop()
         {
             WeakReferenceMessenger.Default.Send(new TaskStartedMessage(""));
+
+            // Clear orange indicator for the task that was running
+            var activeTask = WorkSession.Tasks.FirstOrDefault(t => t.IsActive);
+            if (activeTask != null)
+            {
+                activeTask.IsRemoteTracking = false;
+            }
+
             WorkSession.Stop();
 
             // Clear active tracking
