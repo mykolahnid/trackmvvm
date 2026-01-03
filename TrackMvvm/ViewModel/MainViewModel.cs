@@ -114,7 +114,7 @@ namespace TrackMvvm.ViewModel
         /// <summary>
         /// Performs a full sync cycle: pull remote data, merge with Math.Max, push back
         /// </summary>
-        private async System.Threading.Tasks.Task SyncWithMergeAsync(string context = "sync")
+        private async System.Threading.Tasks.Task SyncWithMergeAsync(string context = "sync", bool allowPush = true)
         {
             if (_syncService == null || WorkSession == null)
                 return;
@@ -130,9 +130,16 @@ namespace TrackMvvm.ViewModel
                     Services.SyncService.MergeSessions(WorkSession, remoteSession, isStartupSync: false);
                 }
 
-                // Now push merged data
-                await _syncService.PushSessionAsync(WorkSession);
-                System.Diagnostics.Debug.WriteLine($"[{context}] Sync with merge completed");
+                // Push merged data only if allowed (skip when there's a conflict)
+                if (allowPush)
+                {
+                    await _syncService.PushSessionAsync(WorkSession);
+                    System.Diagnostics.Debug.WriteLine($"[{context}] Sync with merge completed");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[{context}] Pull and merge completed (push skipped due to conflict)");
+                }
             }
             catch (Exception ex)
             {
@@ -231,31 +238,30 @@ namespace TrackMvvm.ViewModel
             // STEP 1: Check active_tracking and update orange indicators
             bool conflictDetected = await CheckAndUpdateActiveTrackingAsync();
 
-            if (conflictDetected)
-            {
-                // Another device took over our active task - don't send heartbeat or save
-                return;
-            }
-
             // STEP 2: Send heartbeat if we're currently tracking (only if no conflict)
-            var isTracking = WorkSession?.Tasks?.Any(t => t.IsActive) == true;
-            if (isTracking && _syncService != null)
+            if (!conflictDetected)
             {
-                try
+                var isTracking = WorkSession?.Tasks?.Any(t => t.IsActive) == true;
+                if (isTracking && _syncService != null)
                 {
-                    await _syncService.UpdateHeartbeatAsync();
-                    _lastHeartbeatSent = DateTime.UtcNow;
-                    System.Diagnostics.Debug.WriteLine("[Timer] Heartbeat sent");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[Timer] Failed to send heartbeat: {ex.Message}");
+                    try
+                    {
+                        await _syncService.UpdateHeartbeatAsync();
+                        _lastHeartbeatSent = DateTime.UtcNow;
+                        System.Diagnostics.Debug.WriteLine("[Timer] Heartbeat sent");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Timer] Failed to send heartbeat: {ex.Message}");
+                    }
                 }
             }
 
             // STEP 3: Save and sync (every 30s)
+            // If conflict: pull and merge but don't push
+            // If no conflict: pull, merge, and push
             _dataService.SaveWorkSession(WorkSession);
-            await SyncWithMergeAsync("Timer");
+            await SyncWithMergeAsync("Timer", allowPush: !conflictDetected);
         }
 
         private async void WorkSession_TaskStarted(string taskName)
