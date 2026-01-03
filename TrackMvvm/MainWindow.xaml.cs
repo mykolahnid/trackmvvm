@@ -86,10 +86,10 @@ namespace TrackMvvm
                 // Cleanup
                 ViewModelLocator.Cleanup();
 
-                System.Diagnostics.Debug.WriteLine("[MainWindow] Async save complete, now closing");
+                System.Diagnostics.Debug.WriteLine("[MainWindow] Async save complete, now shutting down");
 
-                // Now actually close the window
-                Close();
+                // Shutdown the application (avoids recursive Close() call)
+                Application.Current.Shutdown();
             }
         }
 
