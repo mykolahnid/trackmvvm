@@ -236,15 +236,10 @@ namespace TrackMvvm
             dlg.Show();
         }
 
-        private async void ShowToast(string message)
+        private void ShowToast(string message)
         {
-            // Update the toast message
-            ToastMessage.Text = message;
-            ToastNotification.Visibility = Visibility.Visible;
-
-            // Auto-hide after 3 seconds
-            await System.Threading.Tasks.Task.Delay(3000);
-            ToastNotification.Visibility = Visibility.Collapsed;
+            var toastWindow = new ToastWindow(message, this);
+            toastWindow.Show();
         }
     }
 }
