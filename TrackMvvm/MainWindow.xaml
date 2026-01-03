@@ -37,6 +37,22 @@
     </Window.DataContext>
 
     <Grid x:Name="LayoutRoot">
+        <!-- Toast notification overlay -->
+        <Border x:Name="ToastNotification"
+                Background="#CC000000"
+                CornerRadius="5"
+                Padding="15,10"
+                Margin="10"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Visibility="Collapsed"
+                Panel.ZIndex="1000">
+            <TextBlock x:Name="ToastMessage"
+                       Foreground="White"
+                       TextWrapping="Wrap"
+                       FontSize="14"/>
+        </Border>
+
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
             <Grid>
                 <Grid.ColumnDefinitions>

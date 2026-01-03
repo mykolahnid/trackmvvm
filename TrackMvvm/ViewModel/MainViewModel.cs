@@ -239,12 +239,9 @@ namespace TrackMvvm.ViewModel
                 WeakReferenceMessenger.Default.Send(new TaskStartedMessage(""));
                 WorkSession.Stop();
 
-                // Show notification to user
-                System.Windows.MessageBox.Show(
-                    $"Your task was stopped because device '{deviceId}' started tracking '{taskName}'.",
-                    "Task Stopped by Another Device",
-                    System.Windows.MessageBoxButton.OK,
-                    System.Windows.MessageBoxImage.Information);
+                // Show non-intrusive toast notification to user
+                WeakReferenceMessenger.Default.Send(new ShowToastMessage(
+                    $"Task stopped: '{deviceId}' is now tracking '{taskName}'"));
             }
             catch (Exception ex)
             {
