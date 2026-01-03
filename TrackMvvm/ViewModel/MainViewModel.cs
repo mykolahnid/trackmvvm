@@ -208,6 +208,13 @@ namespace TrackMvvm.ViewModel
                 WeakReferenceMessenger.Default.Send(new TaskStartedMessage(""));
                 WorkSession.Stop();
 
+                // Mark the task as being tracked remotely (orange indicator)
+                var task = WorkSession.Tasks.FirstOrDefault(t => t.Name == taskName);
+                if (task != null)
+                {
+                    task.IsRemoteTracking = true;
+                }
+
                 // Show non-intrusive toast notification to user
                 WeakReferenceMessenger.Default.Send(new ShowToastMessage(
                     $"Task stopped: '{deviceId}' is now tracking '{taskName}'"));
