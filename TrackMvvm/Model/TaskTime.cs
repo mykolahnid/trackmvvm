@@ -10,6 +10,7 @@ namespace TrackMvvm.Model
     {
         private bool _isActive;
         private double _duration;
+        private bool _isRemoteTracking;
 
         [DataMember]
         public string Name { get; set; }
@@ -37,6 +38,18 @@ namespace TrackMvvm.Model
             {
                 if (value == _isActive) return;
                 _isActive = value;
+                OnPropertyChanged();
+            }
+        }
+
+        [XmlIgnore]
+        public bool IsRemoteTracking
+        {
+            get => _isRemoteTracking;
+            set
+            {
+                if (value == _isRemoteTracking) return;
+                _isRemoteTracking = value;
                 OnPropertyChanged();
             }
         }

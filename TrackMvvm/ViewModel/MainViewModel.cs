@@ -89,26 +89,7 @@ namespace TrackMvvm.ViewModel
                 var remoteSession = await _syncService.PullSessionAsync();
                 if (remoteSession != null)
                 {
-                    var merged = Services.SyncService.MergeSessions(WorkSession, remoteSession);
-
-                    // Update existing tasks with merged durations
-                    foreach (var mergedTask in merged.Tasks)
-                    {
-                        var existingTask = WorkSession.Tasks.FirstOrDefault(t => t.Name == mergedTask.Name);
-                        if (existingTask != null)
-                        {
-                            existingTask.Duration = mergedTask.Duration;
-                        }
-                        else
-                        {
-                            // Add new task from remote
-                            // Note: WorkSession.AddTask fires TaskAdded event which updates TasksCollection
-                            WorkSession.AddTask(mergedTask.Name);
-                            var newTask = WorkSession.Tasks.First(t => t.Name == mergedTask.Name);
-                            newTask.Duration = mergedTask.Duration;
-                        }
-                    }
-
+                    Services.SyncService.MergeSessions(WorkSession, remoteSession, isStartupSync: true);
                     System.Diagnostics.Debug.WriteLine("Successfully pulled and merged remote session after authentication");
                 }
             }
@@ -146,19 +127,7 @@ namespace TrackMvvm.ViewModel
                 var remoteSession = await _syncService.PullSessionAsync();
                 if (remoteSession != null)
                 {
-                    // Merge with Math.Max strategy
-                    var merged = Services.SyncService.MergeSessions(WorkSession, remoteSession);
-
-                    // Update local tasks with merged durations
-                    foreach (var mergedTask in merged.Tasks)
-                    {
-                        var existingTask = WorkSession.Tasks.FirstOrDefault(t => t.Name == mergedTask.Name);
-                        if (existingTask != null && existingTask.Duration != mergedTask.Duration)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[{context}] Task '{mergedTask.Name}': {existingTask.Duration}s -> {mergedTask.Duration}s");
-                            existingTask.Duration = mergedTask.Duration;
-                        }
-                    }
+                    Services.SyncService.MergeSessions(WorkSession, remoteSession, isStartupSync: false);
                 }
 
                 // Now push merged data
@@ -339,8 +308,9 @@ namespace TrackMvvm.ViewModel
 
                                             System.Diagnostics.Debug.WriteLine($"[Task Start] In-flight capture: local={localDuration:F0}s, remote={remoteTask.Duration:F0}s + {timeSinceLastUpdate.TotalSeconds:F0}s = estimated={estimatedRemoteDuration:F0}s, using={capturedDuration:F0}s");
 
-                                            // Set the task to start from the higher value
+                                            // Set the task to start from the higher value and mark as remote tracking
                                             localTask.Duration = capturedDuration;
+                                            localTask.IsRemoteTracking = true;
                                         }
                                     }
                                 }

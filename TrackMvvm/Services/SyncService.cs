@@ -76,32 +76,48 @@ public class SyncService : ISyncService
     }
 
     /// <summary>
-    /// Merge remote session with local session (latest duration wins per task)
+    /// Merges remote session into local session in-place.
+    /// Updates local task durations and IsRemoteTracking based on remote data.
+    /// - If remote > local: Update duration and mark as remote tracking
+    /// - If remote <= local: Clear remote tracking indicator
+    /// - Adds new tasks from remote that don't exist locally
     /// </summary>
-    public static WorkSession MergeSessions(WorkSession local, WorkSession remote)
+    public static void MergeSessions(WorkSession local, WorkSession remote, bool isStartupSync = false)
     {
-        var merged = new WorkSession { Today = local.Today };
-
-        // Get all unique task names from both sessions
-        var allTaskNames = local.Tasks.Select(t => t.Name)
-            .Union(remote.Tasks.Select(t => t.Name))
-            .Distinct();
-
-        foreach (var taskName in allTaskNames)
+        // Update existing local tasks
+        foreach (var localTask in local.Tasks)
         {
-            merged.AddTask(taskName);
-            var mergedTask = merged.Tasks.First(t => t.Name == taskName);
-
-            var localTask = local.Tasks.FirstOrDefault(t => t.Name == taskName);
-            var remoteTask = remote.Tasks.FirstOrDefault(t => t.Name == taskName);
-
-            // Use the maximum duration (latest wins)
-            var localDuration = localTask?.Duration ?? 0;
-            var remoteDuration = remoteTask?.Duration ?? 0;
-
-            mergedTask.Duration = Math.Max(localDuration, remoteDuration);
+            var remoteTask = remote.Tasks.FirstOrDefault(t => t.Name == localTask.Name);
+            if (remoteTask != null)
+            {
+                if (isStartupSync)
+                {
+                    // On startup: Use Math.Max (take larger value)
+                    localTask.Duration = Math.Max(localTask.Duration, remoteTask.Duration);
+                }
+                else if (remoteTask.Duration > localTask.Duration)
+                {
+                    // During sync: If remote > local, server has newer data
+                    localTask.Duration = remoteTask.Duration;
+                    localTask.IsRemoteTracking = true;
+                }
+                else if (localTask.IsRemoteTracking)
+                {
+                    // Clear orange - server doesn't have newer data anymore
+                    localTask.IsRemoteTracking = false;
+                }
+            }
         }
 
-        return merged;
+        // Add any new tasks from remote that we don't have locally
+        foreach (var remoteTask in remote.Tasks)
+        {
+            if (!local.Tasks.Any(t => t.Name == remoteTask.Name))
+            {
+                local.AddTask(remoteTask.Name);
+                var newTask = local.Tasks.First(t => t.Name == remoteTask.Name);
+                newTask.Duration = remoteTask.Duration;
+            }
+        }
     }
 }
