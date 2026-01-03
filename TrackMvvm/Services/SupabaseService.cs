@@ -63,7 +63,7 @@ namespace TrackMvvm.Services
             public string DeviceId { get; set; } = string.Empty;
 
             [Column("task_name")]
-            public string? TaskName { get; set; }
+            public string TaskName { get; set; }
 
             [Column("started_at")]
             public DateTime? StartedAt { get; set; }
@@ -76,11 +76,11 @@ namespace TrackMvvm.Services
     public class SupabaseService : ISupabaseService
     {
         private readonly Supabase.Client _client;
-        private Action<string, string?>? _onActiveTrackingChanged;
+        private Action<string, string> _onActiveTrackingChanged;
         private bool _initialized = false;
 
         public bool IsAuthenticated => _client.Auth.CurrentUser != null;
-        public string? UserId => _client.Auth.CurrentUser?.Id;
+        public string UserId => _client.Auth.CurrentUser?.Id;
 
         public SupabaseService(string url, string anonKey)
         {
@@ -289,7 +289,7 @@ namespace TrackMvvm.Services
             }
         }
 
-        public async Task<WorkSession?> GetTodaySessionAsync()
+        public async Task<WorkSession> GetTodaySessionAsync()
         {
             if (!IsAuthenticated || UserId == null)
             {
@@ -441,7 +441,7 @@ namespace TrackMvvm.Services
             }
         }
 
-        public async Task<(string DeviceId, string? TaskName, DateTime? UpdatedAt)?> GetActiveTrackingAsync()
+        public async Task<(string DeviceId, string TaskName, DateTime? UpdatedAt)?> GetActiveTrackingAsync()
         {
             if (!IsAuthenticated || UserId == null)
                 return null;
@@ -466,7 +466,7 @@ namespace TrackMvvm.Services
             }
         }
 
-        public void SubscribeToActiveTracking(Action<string, string?> onChanged)
+        public void SubscribeToActiveTracking(Action<string, string> onChanged)
         {
             // Realtime will be implemented in Phase 4
             // For now, polling will be used

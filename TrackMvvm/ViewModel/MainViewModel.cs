@@ -15,7 +15,7 @@ namespace TrackMvvm.ViewModel
     public partial class MainViewModel : ObservableObject
     {
         private readonly IDataService _dataService;
-        private readonly Services.ISyncService? _syncService;
+        private readonly Services.ISyncService _syncService;
 
         public ObservableCollection<TaskTimeViewModel> TasksCollection { get; set; } = new ObservableCollection<TaskTimeViewModel>();
 

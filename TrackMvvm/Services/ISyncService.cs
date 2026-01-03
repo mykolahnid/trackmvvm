@@ -13,7 +13,7 @@ public interface ISyncService
     /// <summary>
     /// Pull today's session from Supabase and merge with local
     /// </summary>
-    Task<WorkSession?> PullSessionAsync();
+    Task<WorkSession> PullSessionAsync();
 
     /// <summary>
     /// Start tracking a task (last-writer-wins)
@@ -29,7 +29,7 @@ public interface ISyncService
     /// Get current active tracking state
     /// Returns tuple: (deviceId, taskName, updatedAt)
     /// </summary>
-    Task<(string DeviceId, string? TaskName, System.DateTime? UpdatedAt)?> GetActiveTrackingAsync();
+    Task<(string DeviceId, string TaskName, System.DateTime? UpdatedAt)?> GetActiveTrackingAsync();
 
     /// <summary>
     /// Update heartbeat timestamp (called every 30s while tracking)

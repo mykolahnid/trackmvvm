@@ -27,7 +27,7 @@ public interface ISupabaseService
     /// <summary>
     /// Get the current user ID
     /// </summary>
-    string? UserId { get; }
+    string UserId { get; }
 
     /// <summary>
     /// Sync work session to Supabase (upsert session and all tasks)
@@ -37,7 +37,7 @@ public interface ISupabaseService
     /// <summary>
     /// Get today's work session from Supabase
     /// </summary>
-    Task<WorkSession?> GetTodaySessionAsync();
+    Task<WorkSession> GetTodaySessionAsync();
 
     /// <summary>
     /// Start tracking a task (updates active_tracking table with last-writer-wins)
@@ -58,13 +58,13 @@ public interface ISupabaseService
     /// Get current active tracking state
     /// Returns tuple: (deviceId, taskName, updatedAt)
     /// </summary>
-    Task<(string DeviceId, string? TaskName, DateTime? UpdatedAt)?> GetActiveTrackingAsync();
+    Task<(string DeviceId, string TaskName, DateTime? UpdatedAt)?> GetActiveTrackingAsync();
 
     /// <summary>
     /// Subscribe to active tracking changes (Realtime)
-    /// Callback parameters: deviceId (string), taskName (string?)
+    /// Callback parameters: deviceId (string), taskName (string)
     /// </summary>
-    void SubscribeToActiveTracking(Action<string, string?> onChanged);
+    void SubscribeToActiveTracking(Action<string, string> onChanged);
 
     /// <summary>
     /// Unsubscribe from active tracking changes

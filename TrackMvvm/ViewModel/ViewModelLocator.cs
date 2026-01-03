@@ -85,7 +85,7 @@ namespace TrackMvvm.ViewModel
         /// <summary>
         /// Gets the Supabase service if configured
         /// </summary>
-        public static ISupabaseService? SupabaseService => _serviceProvider?.GetService<ISupabaseService>();
+        public static ISupabaseService SupabaseService => _serviceProvider?.GetService<ISupabaseService>();
 
         /// <summary>
         /// Gets a value indicating whether the application is in design mode.

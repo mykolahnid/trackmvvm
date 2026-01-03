@@ -27,7 +27,7 @@ public class SyncService : ISyncService
         return await _supabaseService.SyncSessionAsync(session, _deviceId);
     }
 
-    public async Task<WorkSession?> PullSessionAsync()
+    public async Task<WorkSession> PullSessionAsync()
     {
         System.Diagnostics.Debug.WriteLine($"[SyncService] PullSessionAsync called. IsAuthenticated: {_supabaseService.IsAuthenticated}");
 
@@ -59,7 +59,7 @@ public class SyncService : ISyncService
         return await _supabaseService.StopTaskTrackingAsync();
     }
 
-    public async Task<(string DeviceId, string? TaskName, DateTime? UpdatedAt)?> GetActiveTrackingAsync()
+    public async Task<(string DeviceId, string TaskName, DateTime? UpdatedAt)?> GetActiveTrackingAsync()
     {
         if (!_supabaseService.IsAuthenticated)
             return null;
