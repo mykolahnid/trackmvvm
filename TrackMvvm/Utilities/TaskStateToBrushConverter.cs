@@ -26,7 +26,7 @@ namespace TrackMvvm.Utilities
                 return Brushes.Red;
 
             if (isRemoteTracking)
-                return Brushes.Orange;
+                return Brushes.DarkMagenta;
 
             return Brushes.Black;
         }
