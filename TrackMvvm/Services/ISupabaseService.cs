@@ -45,9 +45,11 @@ public interface ISupabaseService
     Task<bool> StartTaskTrackingAsync(string taskName, string deviceId);
 
     /// <summary>
-    /// Stop tracking (clears active_tracking)
+    /// Stop tracking (clears active_tracking), but only if the given device currently owns the lock.
+    /// No-op (returns true) if another device owns it, so a device that isn't tracking anything
+    /// can't clobber another device's active claim.
     /// </summary>
-    Task<bool> StopTaskTrackingAsync();
+    Task<bool> StopTaskTrackingAsync(string deviceId);
 
     /// <summary>
     /// Update heartbeat timestamp (called every 30s while tracking)

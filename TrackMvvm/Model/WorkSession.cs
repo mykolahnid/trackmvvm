@@ -54,13 +54,18 @@ namespace TrackMvvm.Model
 
         private void timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            OnPropertyChanged(nameof(TotalDuration));
             if (activeTask != null)
             {
                 var activeTaskDuration = (stopwatch.Elapsed - rememberedDuration).TotalSeconds;
                 activeTask.Duration += activeTaskDuration;
-                TotalTasksDuration += activeTaskDuration;
+                double sum = 0;
+                foreach (var task in Tasks)
+                {
+                    sum += task.Duration;
+                }
+                TotalTasksDuration = sum;
             }
+            OnPropertyChanged(nameof(TotalDuration));
             rememberedDuration = stopwatch.Elapsed;
         }
 

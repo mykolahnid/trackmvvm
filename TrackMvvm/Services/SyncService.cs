@@ -56,7 +56,7 @@ public class SyncService : ISyncService
         if (!_supabaseService.IsAuthenticated)
             return false;
 
-        return await _supabaseService.StopTaskTrackingAsync();
+        return await _supabaseService.StopTaskTrackingAsync(_deviceId);
     }
 
     public async Task<(string DeviceId, string TaskName, DateTime? UpdatedAt)?> GetActiveTrackingAsync()

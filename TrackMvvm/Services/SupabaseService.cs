@@ -379,7 +379,7 @@ namespace TrackMvvm.Services
             }
         }
 
-        public async Task<bool> StopTaskTrackingAsync()
+        public async Task<bool> StopTaskTrackingAsync(string deviceId)
         {
             if (!IsAuthenticated || UserId == null)
                 return false;
@@ -388,19 +388,25 @@ namespace TrackMvvm.Services
             {
                 await EnsureInitializedAsync();
 
-                // Clear active tracking
-                var activeTracking = new Models.ActiveTrackingDb
-                {
-                    UserId = UserId,
-                    DeviceId = string.Empty,
-                    TaskName = null,
-                    StartedAt = null,
-                    UpdatedAt = DateTime.UtcNow
-                };
+                // Only clear the lock if this device is the one that currently owns it.
+                // active_tracking is a single row per user (not per device), so an unconditional
+                // clear here would let an idle/closing device wipe out another device's active claim.
+                var current = await _client
+                    .From<Models.ActiveTrackingDb>()
+                    .Where(x => x.UserId == UserId)
+                    .Single();
+
+                if (current == null || current.DeviceId != deviceId)
+                    return true;
+
+                current.DeviceId = string.Empty;
+                current.TaskName = null;
+                current.StartedAt = null;
+                current.UpdatedAt = DateTime.UtcNow;
 
                 await _client
                     .From<Models.ActiveTrackingDb>()
-                    .Update(activeTracking);
+                    .Update(current);
 
                 return true;
             }
